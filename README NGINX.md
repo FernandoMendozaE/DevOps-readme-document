@@ -29,7 +29,7 @@
       <a href="#introducción-a-nginx">Introducción a NGINX</a>
     </li>
     <li>
-      <a href="#como-instalar-nginx">Cómo instalar NGINX</a>
+      <a href="#cómo-instalar-nginx">Cómo instalar NGINX</a>
       <ul>
         <li><a href="#como-maquina-virtual-local-con-vagrant">Cómo máquina virtual local con Vagrant</a>
           <ul>
