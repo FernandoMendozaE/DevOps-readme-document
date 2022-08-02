@@ -36,7 +36,7 @@
             <li><a href="#agregar-dominio-a-su-archivo-de-hosts">Agregar dominio a su archivo de hosts</a>
           </ul>
         </li>
-        <li><a href="#installation">Installation</a></li>
+        <li><a href="#instalar-nginx">Instalar NGINX</a></li>
       </ul>
     </li>
     <li><a href="#usage">Usage</a></li>
@@ -77,21 +77,6 @@ NGINX también es mucho más fácil de configurar gracias a una sintaxis de arch
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
-### Built With
-
-This section should list any major frameworks/libraries used to bootstrap your project. Leave any add-ons/plugins for the acknowledgements section. Here are a few examples.
-
-- [![Next][next.js]][next-url]
-- [![React][react.js]][react-url]
-- [![Vue][vue.js]][vue-url]
-- [![Angular][angular.io]][angular-url]
-- [![Svelte][svelte.dev]][svelte-url]
-- [![Laravel][laravel.com]][laravel-url]
-- [![Bootstrap][bootstrap.com]][bootstrap-url]
-- [![JQuery][jquery.com]][jquery-url]
-
-<p align="right">(<a href="#top">volver arriba</a>)</p>
-
 ### Cómo instalar NGINX
 
 Instalar NGINX en un sistema basado en Linux es bastante sencillo. Puede usar un servidor privado virtual que ejecuta Ubuntu como su área de juegos, o puede aprovisionar una máquina virtual en su sistema local usando Vagrant.
@@ -128,7 +113,7 @@ Este `Vagrantfilees` el archivo de configuración del que hablé anteriormente. 
 
 Para iniciar una máquina virtual usando esta configuración, abra su terminal dentro del directorio de trabajo y ejecute el siguiente comando:
 
-```sh
+```
 vagrant up
 
 # Bringing machine 'nginx-handbook-box' up with 'virtualbox' provider...
@@ -173,17 +158,18 @@ vagrant status
 
 Si todo se hizo correctamente, debe iniciar sesión en su máquina virtual, lo que será evidente por la `vagrant@nginx-handbook-box` línea en su terminal.
 
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
 ### Agregar dominio a su archivo de hosts
 
 Se podrá acceder a esta máquina virtual en **http://192.168.20.20** en su máquina local. Incluso puede asignar un dominio personalizado como **http://nginx-handbook.test** a la máquina virtual agregando una entrada a su archivo de **hosts** :
 
-```sh
+```
 # on mac and linux terminal
 sudo nano /etc/hosts
 
 # on windows command prompt as administrator
 notepad c:\windows\system32\drivers\etc\hosts
-
 ```
 
 Ahora agregue la siguiente línea al final del archivo:
@@ -196,13 +182,53 @@ Ahora debería poder acceder a la máquina virtual en **http://nginx-handbook.te
 
 Puede detener o destruir la máquina virtual ejecutando los siguientes comandos dentro del directorio de trabajo:
 
-```sh
+```
 # to stop the virtual machine
 vagrant halt
 
 # to destroy the virtual machine
 vagrant destroy
 ```
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
+### Instalar NGINX
+
+Suponiendo que haya iniciado sesión en su servidor o máquina virtual, lo primero que debe hacer es realizar una actualización. Ejecute el siguiente comando para hacerlo:
+
+```sh
+sudo apt update && sudo apt upgrade -y
+```
+
+Después de la actualización, instale NGINX ejecutando el siguiente comando:
+
+```sh
+sudo apt install nginx -y
+```
+
+Una vez que se realiza la instalación, NGINX debe registrarse automáticamente como un `systemd` servicio y debe estar ejecutándose. Para verificar, ejecute el siguiente comando:
+
+```
+sudo systemctl status nginx
+
+# ● nginx.service - A high performance web server and a reverse proxy server
+#      Loaded: loaded (/lib/systemd/system/nginx.service; enabled; vendor preset: enabled)
+#      Active: active (running)
+```
+
+Si el estado dice `running`, entonces está listo para continuar. De lo contrario, puede iniciar el servicio ejecutando este comando:
+
+```sh
+sudo systemctl start nginx
+```
+
+Finalmente, para una verificación visual de que todo funciona correctamente, visite su servidor/máquina virtual con su navegador favorito y debería ver la página de bienvenida predeterminada de NGINX:
+
+<div align="center"> 
+  <img src="https://www.freecodecamp.org/news/content/images/size/w1600/2021/04/image-89.png" alt="screenshot" />
+</div>
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
 
 <!-- GETTING STARTED -->
 
