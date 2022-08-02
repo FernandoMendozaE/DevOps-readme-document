@@ -113,7 +113,7 @@ Este `Vagrantfilees` el archivo de configuración del que hablé anteriormente. 
 
 Para iniciar una máquina virtual usando esta configuración, abra su terminal dentro del directorio de trabajo y ejecute el siguiente comando:
 
-```
+```sh
 vagrant up
 
 # Bringing machine 'nginx-handbook-box' up with 'virtualbox' provider...
@@ -164,7 +164,7 @@ Si todo se hizo correctamente, debe iniciar sesión en su máquina virtual, lo q
 
 Se podrá acceder a esta máquina virtual en **http://192.168.20.20** en su máquina local. Incluso puede asignar un dominio personalizado como **http://nginx-handbook.test** a la máquina virtual agregando una entrada a su archivo de **hosts** :
 
-```
+```sh
 # on mac and linux terminal
 sudo nano /etc/hosts
 
@@ -182,7 +182,7 @@ Ahora debería poder acceder a la máquina virtual en **http://nginx-handbook.te
 
 Puede detener o destruir la máquina virtual ejecutando los siguientes comandos dentro del directorio de trabajo:
 
-```
+```bash
 # to stop the virtual machine
 vagrant halt
 
