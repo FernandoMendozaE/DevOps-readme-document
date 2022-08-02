@@ -31,9 +31,9 @@
     <li>
       <a href="#cómo-instalar-nginx">Cómo instalar NGINX</a>
       <ul>
-        <li><a href="#como-maquina-virtual-local-con-vagrant">Cómo máquina virtual local con Vagrant</a>
+        <li><a href="#cómo-maquina-virtual-local-con-vagrant">Cómo máquina virtual local con Vagrant</a>
           <ul>
-            <li><a href="#agregar-dominio">Agregar dominio a su archivo de hosts</a>
+            <li><a href="#agregar-dominio-a-su-archivo-de-hosts">Agregar dominio a su archivo de hosts</a>
           </ul>
         </li>
         <li><a href="#installation">Installation</a></li>
