@@ -27,14 +27,15 @@
   <ol>
     <li>
       <a href="#introducción-a-nginx">Introducción a NGINX</a>
-      <ul>
-        <li><a href="#built-with">Built With</a></li>
-      </ul>
     </li>
     <li>
-      <a href="#getting-started">Getting Started</a>
+      <a href="#como-instalar-nginx">Cómo instalar NGINX</a>
       <ul>
-        <li><a href="#prerequisites">Prerequisites</a></li>
+        <li><a href="#como-maquina-virtual-local-con-vagrant">Cómo máquina virtual local con Vagrant</a>
+          <ul>
+            <li><a href="#agregar-dominio">Agregar dominio a su archivo de hosts</a>
+          </ul>
+        </li>
         <li><a href="#installation">Installation</a></li>
       </ul>
     </li>
@@ -90,6 +91,118 @@ This section should list any major frameworks/libraries used to bootstrap your p
 - [![JQuery][jquery.com]][jquery-url]
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
+
+### Cómo instalar NGINX
+
+Instalar NGINX en un sistema basado en Linux es bastante sencillo. Puede usar un servidor privado virtual que ejecuta Ubuntu como su área de juegos, o puede aprovisionar una máquina virtual en su sistema local usando Vagrant.
+
+### Cómo máquina virtual local con Vagrant
+
+Vagrant es una herramienta de código abierto de Hashicorp que le permite aprovisionar máquinas virtuales usando archivos de configuración simples.
+
+Cree un directorio de trabajo en algún lugar de su sistema con un nombre sensato. El mío es `~/vagrant/nginx-handbook` directorio.
+
+Dentro del directorio de trabajo, cree un archivo llamado `Vagrantfiley` coloque el siguiente contenido allí:
+
+```sh
+Vagrant.configure("2") do |config|
+
+    config.vm.hostname = "nginx-handbook-box"
+
+    config.vm.box = "ubuntu/focal64"
+
+    config.vm.define "nginx-handbook-box"
+
+    config.vm.network "private_network", ip: "192.168.20.20"
+
+    config.vm.provider "virtualbox" do |vb|
+      vb.cpus = 1
+      vb.memory = "1024"
+      vb.name = "nginx-handbook"
+    end
+
+  end
+```
+
+Este `Vagrantfilees` el archivo de configuración del que hablé anteriormente. Contiene información como el nombre de la máquina virtual, la cantidad de CPU, el tamaño de la RAM, la dirección IP y más.
+
+Para iniciar una máquina virtual usando esta configuración, abra su terminal dentro del directorio de trabajo y ejecute el siguiente comando:
+
+```sh
+vagrant up
+
+# Bringing machine 'nginx-handbook-box' up with 'virtualbox' provider...
+# ==> nginx-handbook-box: Importing base box 'ubuntu/focal64'...
+# ==> nginx-handbook-box: Matching MAC address for NAT networking...
+# ==> nginx-handbook-box: Checking if box 'ubuntu/focal64' version '20210415.0.0' is up to date...
+# ==> nginx-handbook-box: Setting the name of the VM: nginx-handbook
+# ==> nginx-handbook-box: Clearing any previously set network interfaces...
+# ==> nginx-handbook-box: Preparing network interfaces based on configuration...
+#     nginx-handbook-box: Adapter 1: nat
+#     nginx-handbook-box: Adapter 2: hostonly
+# ==> nginx-handbook-box: Forwarding ports...
+#     nginx-handbook-box: 22 (guest) => 2222 (host) (adapter 1)
+# ==> nginx-handbook-box: Running 'pre-boot' VM customizations...
+# ==> nginx-handbook-box: Booting VM...
+# ==> nginx-handbook-box: Waiting for machine to boot. This may take a few minutes...
+#     nginx-handbook-box: SSH address: 127.0.0.1:2222
+#     nginx-handbook-box: SSH username: vagrant
+#     nginx-handbook-box: SSH auth method: private key
+#     nginx-handbook-box: Warning: Remote connection disconnect. Retrying...
+#     nginx-handbook-box: Warning: Connection reset. Retrying...
+#     nginx-handbook-box:
+#     nginx-handbook-box: Vagrant insecure key detected. Vagrant will automatically replace
+#     nginx-handbook-box: this with a newly generated keypair for better security.
+#     nginx-handbook-box:
+#     nginx-handbook-box: Inserting generated public key within guest...
+#     nginx-handbook-box: Removing insecure key from the guest if it's present...
+#     nginx-handbook-box: Key inserted! Disconnecting and reconnecting using new SSH key...
+# ==> nginx-handbook-box: Machine booted and ready!
+# ==> nginx-handbook-box: Checking for guest additions in VM...
+# ==> nginx-handbook-box: Setting hostname...
+# ==> nginx-handbook-box: Configuring and enabling network interfaces...
+# ==> nginx-handbook-box: Mounting shared folders...
+#     nginx-handbook-box: /vagrant => /home/fhsinchy/vagrant/nginx-handbook
+
+vagrant status
+
+# Current machine states:
+
+# nginx-handbook-box           running (virtualbox)
+```
+
+Si todo se hizo correctamente, debe iniciar sesión en su máquina virtual, lo que será evidente por la `vagrant@nginx-handbook-box` línea en su terminal.
+
+### Agregar dominio a su archivo de hosts
+
+Se podrá acceder a esta máquina virtual en **http://192.168.20.20** en su máquina local. Incluso puede asignar un dominio personalizado como **http://nginx-handbook.test** a la máquina virtual agregando una entrada a su archivo de **hosts** :
+
+```sh
+# on mac and linux terminal
+sudo nano /etc/hosts
+
+# on windows command prompt as administrator
+notepad c:\windows\system32\drivers\etc\hosts
+
+```
+
+Ahora agregue la siguiente línea al final del archivo:
+
+```sh
+192.168.20.20   nginx-handbook.test
+```
+
+Ahora debería poder acceder a la máquina virtual en **http://nginx-handbook.test** URI en su navegador.
+
+Puede detener o destruir la máquina virtual ejecutando los siguientes comandos dentro del directorio de trabajo:
+
+```sh
+# to stop the virtual machine
+vagrant halt
+
+# to destroy the virtual machine
+vagrant destroy
+```
 
 <!-- GETTING STARTED -->
 
