@@ -51,6 +51,15 @@
         <li><a href="#cómo-incluir-archivos-de-configuración-parciales">Cómo incluir archivos de configuración parciales</a></li>
       </ul>
     </li>
+    <li>
+      <a href="#enrutamiento-dinámico-en-nginx">Enrutamiento dinámico en NGINX</a>
+      <ul>
+        <li><a href="#coincidencias-de-ubicación">Coincidencias de ubicación</a></li>
+        <li><a href="#variables-en-nginx">Variables en NGINX</a></li>
+        <li><a href="#redirecciones-y-reescrituras">Redirecciones y reescrituras</a></li>
+        <li><a href="#cómo-probar-varios-archivos">Cómo probar varios archivos</a></li>
+      </ul>
+    </li>
     <li><a href="#roadmap">Roadmap</a></li>
     <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
@@ -907,6 +916,346 @@ Visite el servidor para una verificación visual [http://nginx-handbook.test](ht
 <div align="center"> 
   <img src="https://www.freecodecamp.org/news/content/images/size/w1600/2021/04/image-92.png" alt="screenshot" />
 </div>
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
+### Enrutamiento dinámico en NGINX
+
+La configuración que escribió en la sección anterior era una configuración de servidor de contenido estático muy simple. Todo lo que hizo fue hacer coincidir un archivo de la raíz del sitio correspondiente a la URI que visita el cliente y responder.
+
+Entonces, si el cliente solicita archivos existentes en la raíz, como `index.html`, `about.html` o `mini.min.css` NGINX devolverá el archivo. Pero si visita una ruta como http://nginx-handbook.test/nothing, responderá con la página 404 predeterminada:
+
+En esta sección, aprenderá sobre el `location` contexto, las variables, las redirecciones, las reescrituras y la `try_files` directiva.
+
+<div align="center"> 
+  <img src="https://www.freecodecamp.org/news/content/images/size/w1600/2021/04/image-93.png" />
+</div>
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
+### Coincidencias de ubicación
+
+El primer concepto que discutiremos en esta sección es el `location` contexto. Actualice la configuración de la siguiente manera:
+
+```sh
+events {
+
+}
+
+http {
+
+    server {
+
+        listen 80;
+        server_name nginx-handbook.test;
+
+        location /agatha {
+            return 200 "Miss Marple.\nHercule Poirot.\n";
+        }
+    }
+}
+```
+
+Hemos reemplazado la `root` directiva con un nuevo `location` contexto. Este contexto suele estar anidado dentro de `server` bloques. Puede haber múltiples `location` contextos dentro de un `server` contexto.
+
+Si envía una solicitud a http://nginx-handbook.test/agatha, obtendrá un código de respuesta 200 y una lista de personajes creados por Agatha Christie.
+
+```sh
+curl -i http://nginx-handbook.test/agatha
+
+# HTTP/1.1 200 OK
+# Server: nginx/1.18.0 (Ubuntu)
+# Date: Wed, 21 Apr 2021 15:59:07 GMT
+# Content-Type: text/plain
+# Content-Length: 29
+# Connection: keep-alive
+
+# Miss Marple.
+# Hercule Poirot.
+```
+
+Ahora, si envía una solicitud a http://nginx-handbook.test/agatha-christie, obtendrá la misma respuesta:
+
+```sh
+curl -i http://nginx-handbook.test/agatha-christie
+
+# HTTP/1.1 200 OK
+# Server: nginx/1.18.0 (Ubuntu)
+# Date: Wed, 21 Apr 2021 15:59:07 GMT
+# Content-Type: text/plain
+# Content-Length: 29
+# Connection: keep-alive
+
+# Miss Marple.
+# Hercule Poirot.
+```
+
+Esto sucede porque, al escribir `location /agatha`, le estás diciendo a NGINX que coincida con cualquier URI que comience con "agatha". Este tipo de coincidencia se denomina **coincidencia de prefijo**.
+
+Para realizar una **coincidencia exacta**, deberá actualizar el código de la siguiente manera:
+
+```sh
+events {
+
+}
+
+http {
+
+    server {
+
+        listen 80;
+        server_name nginx-handbook.test;
+
+        location = /agatha {
+            return 200 "Miss Marple.\nHercule Poirot.\n";
+        }
+    }
+
+}
+```
+
+Agregar un `=` letrero antes del URI de ubicación le indicará a NGINX que responda solo si la URL coincide exactamente. Ahora, si envía una solicitud a algo que no sea `/agatha` , obtendrá una respuesta 404.
+
+```sh
+curl -I http://nginx-handbook.test/agatha-christie
+
+# HTTP/1.1 404 Not Found
+# Server: nginx/1.18.0 (Ubuntu)
+# Date: Wed, 21 Apr 2021 16:14:29 GMT
+# Content-Type: text/html
+# Content-Length: 162
+# Connection: keep-alive
+
+curl -I http://nginx-handbook.test/agatha
+
+# HTTP/1.1 200 OK
+# Server: nginx/1.18.0 (Ubuntu)
+# Date: Wed, 21 Apr 2021 16:15:04 GMT
+# Content-Type: text/plain
+# Content-Length: 29
+# Connection: keep-alive
+```
+
+Otro tipo de coincidencia en NGINX es la coincidencia de expresiones **regulares**. Al usar esta coincidencia, puede comparar las URL de ubicación con expresiones regulares complejas.
+
+```sh
+events {
+
+}
+
+http {
+
+    server {
+
+        listen 80;
+        server_name nginx-handbook.test;
+
+        location ~ /agatha[0-9] {
+        	return 200 "Miss Marple.\nHercule Poirot.\n";
+        }
+    }
+
+}
+```
+
+Al reemplazar el `=` signo utilizado anteriormente con un `~` signo, le está diciendo a NGINX que realice una coincidencia de expresión regular. Establecer la ubicación en `~ /agatha[0-9]` significa que NIGINX solo responderá si hay un número después de la palabra "agatha":
+
+```sh
+curl -I http://nginx-handbook.test/agatha
+
+# HTTP/1.1 404 Not Found
+# Server: nginx/1.18.0 (Ubuntu)
+# Date: Wed, 21 Apr 2021 16:14:29 GMT
+# Content-Type: text/html
+# Content-Length: 162
+# Connection: keep-alive
+
+curl -I http://nginx-handbook.test/agatha8
+
+# HTTP/1.1 200 OK
+# Server: nginx/1.18.0 (Ubuntu)
+# Date: Wed, 21 Apr 2021 16:15:04 GMT
+# Content-Type: text/plain
+# Content-Length: 29
+# Connection: keep-alive
+```
+
+Una coincidencia de expresiones regulares distingue entre mayúsculas y minúsculas de forma predeterminada, lo que significa que si escribe en mayúscula cualquiera de las letras, la ubicación no funcionará:
+
+```sh
+curl -I http://nginx-handbook.test/Agatha8
+
+# HTTP/1.1 404 Not Found
+# Server: nginx/1.18.0 (Ubuntu)
+# Date: Wed, 21 Apr 2021 16:14:29 GMT
+# Content-Type: text/html
+# Content-Length: 162
+# Connection: keep-alive
+```
+
+Para convertir esto en mayúsculas y minúsculas, deberá agregar un `*` después del `~` signo.
+
+```sh
+events {
+
+}
+
+http {
+
+    server {
+
+        listen 80;
+        server_name nginx-handbook.test;
+
+        location ~* /agatha[0-9] {
+        	return 200 "Miss Marple.\nHercule Poirot.\n";
+        }
+    }
+
+}
+```
+
+Eso le indicará a NGINX que suelte la sensibilidad de tipo y haga coincidir la ubicación de todos modos.
+
+```sh
+curl -I http://nginx-handbook.test/agatha8
+
+# HTTP/1.1 200 OK
+# Server: nginx/1.18.0 (Ubuntu)
+# Date: Wed, 21 Apr 2021 16:15:04 GMT
+# Content-Type: text/plain
+# Content-Length: 29
+# Connection: keep-alive
+
+curl -I http://nginx-handbook.test/Agatha8
+
+# HTTP/1.1 200 OK
+# Server: nginx/1.18.0 (Ubuntu)
+# Date: Wed, 21 Apr 2021 16:15:04 GMT
+# Content-Type: text/plain
+# Content-Length: 29
+# Connection: keep-alive
+
+```
+
+NGINX asigna valores de prioridad a estas coincidencias, y una coincidencia de expresiones regulares tiene más prioridad que una coincidencia de prefijo.
+
+```sh
+events {
+
+}
+
+http {
+
+    server {
+
+        listen 80;
+        server_name nginx-handbook.test;
+
+		location /Agatha8 {
+        	return 200 "prefix matched.\n";
+        }
+
+        location ~* /agatha[0-9] {
+        	return 200 "regex matched.\n";
+        }
+    }
+
+}
+```
+
+Ahora, si envía una solicitud a http://nginx-handbook.test/Agatha8, obtendrá la siguiente respuesta:
+
+```sh
+curl -i http://nginx-handbook.test/Agatha8
+
+# HTTP/1.1 200 OK
+# Server: nginx/1.18.0 (Ubuntu)
+# Date: Thu, 22 Apr 2021 08:08:18 GMT
+# Content-Type: text/plain
+# Content-Length: 15
+# Connection: keep-alive
+
+# regex matched.
+```
+
+Pero esta prioridad se puede cambiar un poco. El último tipo de coincidencia en NGINX es una coincidencia de prefijo preferencial . Para convertir una coincidencia de prefijo en preferencial, debe incluir el `^~` modificador antes del URI de ubicación:
+
+```sh
+events {
+
+}
+
+http {
+
+    server {
+
+        listen 80;
+        server_name nginx-handbook.test;
+
+		location ^~ /Agatha8 {
+        	return 200 "prefix matched.\n";
+        }
+
+        location ~* /agatha[0-9] {
+        	return 200 "regex matched.\n";
+        }
+    }
+
+}
+```
+
+Ahora, si envía una solicitud a http://nginx-handbook.test/Agatha8, obtendrá la siguiente respuesta:
+
+```sh
+curl -i http://nginx-handbook.test/Agatha8
+
+# HTTP/1.1 200 OK
+# Server: nginx/1.18.0 (Ubuntu)
+# Date: Thu, 22 Apr 2021 08:13:24 GMT
+# Content-Type: text/plain
+# Content-Length: 16
+# Connection: keep-alive
+
+# prefix matched.
+```
+
+Esta vez, gana la coincidencia de prefijo. Entonces, la lista de todas las coincidencias en orden descendente de prioridad es la siguiente:
+
+<div align="center">
+
+| JUEGO                | MODIFICADOR |
+| -------------------- | ----------- |
+| Exacto               | `=`         |
+| Prefijo preferencial | ``          |
+| REGEX                | `~` o `~*`  |
+| Prefijo              | `None`      |
+
+</div>
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
