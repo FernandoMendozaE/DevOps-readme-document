@@ -1450,8 +1450,6 @@ Y si visita la URI usando un navegador, verá la página about.html mientras que
   <img src="https://www.freecodecamp.org/news/content/images/2021/04/rewrite.png" alt="screenshot" />
 </div>
 
-<br>
-
 Además de la forma en que se maneja el cambio de URI, hay otra diferencia entre una redirección y una reescritura. Cuando ocurre una reescritura, `server` NGINX vuelve a evaluar el contexto. Entonces, una reescritura es una operación más costosa que una redirección.
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
