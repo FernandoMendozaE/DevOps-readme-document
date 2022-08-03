@@ -1229,7 +1229,7 @@ Esta vez, gana la coincidencia de prefijo. Entonces, la lista de todas las coinc
 | JUEGO                | MODIFICADOR |
 | -------------------- | ----------- |
 | Exacto               | `=`         |
-| Prefijo preferencial | ``          |
+| Prefijo preferencial | `^~`        |
 | REGEX                | `~` o `~*`  |
 | Prefijo              | `None`      |
 
