@@ -1161,6 +1161,7 @@ http {
         location ~* /agatha[0-9] {
         	return 200 "regex matched.\n";
         }
+        pruebas
     }
 
 }
