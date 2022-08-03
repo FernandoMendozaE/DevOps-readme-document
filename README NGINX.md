@@ -1493,7 +1493,7 @@ Ahora, si visitas el servidor, verás la imagen:
 
 Pero si actualiza la configuración para intentar con un archivo inexistente como blackhole.jpg, obtendrá una respuesta 404 con el mensaje "sadly, you've hit a brick wall buddy!".
 
-Ahora, el problema de escribir una `try_files` directiva de esta manera es que no importa qué URL visite, siempre que el servidor reciba una solicitud y el archivo the-nginx-handbook.jpg se encuentre en el disco, NGINX lo devolverá.
+Ahora, el problema de escribir una `try_files` directiva de esta manera es que no importa qué URL visite (http://nginx-handbook.test/nothing), siempre que el servidor reciba una solicitud y el archivo the-nginx-handbook.jpg se encuentre en el disco, NGINX lo devolverá.
 
 <div align="center"> 
   <img src="https://www.freecodecamp.org/news/content/images/2021/04/try-files.png" alt="screenshot" />
