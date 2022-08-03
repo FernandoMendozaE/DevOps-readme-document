@@ -581,8 +581,6 @@ curl http://librarian.library.test
 Para servir contenido estático, primero debe almacenarlo en algún lugar de su servidor. Si enumera los archivos y el directorio en la raíz de su servidor usando `ls` , encontrará un directorio llamado `/srv` allí:
 
 ```sh
-ervidor usando ls, encontrará un directorio llamado /srvallí:
-
 ls -lh /
 
 # lrwxrwxrwx   1 root    root       7 Apr 16 02:10 bin -> usr/bin
