@@ -1053,7 +1053,7 @@ http {
         server_name nginx-handbook.test;
 
         location ~ /agatha[0-9] {
-        	return 200 "Miss Marple.\nHercule Poirot.\n";
+            return 200 "Miss Marple.\nHercule Poirot.\n";
         }
     }
 
@@ -1110,7 +1110,7 @@ http {
         server_name nginx-handbook.test;
 
         location ~* /agatha[0-9] {
-        	return 200 "Miss Marple.\nHercule Poirot.\n";
+            return 200 "Miss Marple.\nHercule Poirot.\n";
         }
     }
 
@@ -1155,11 +1155,11 @@ http {
         server_name nginx-handbook.test;
 
         location /Agatha8 {
-        	return 200 "prefix matched.\n";
+            return 200 "prefix matched.\n";
         }
 
         location ~* /agatha[0-9] {
-        	return 200 "regex matched.\n";
+            return 200 "regex matched.\n";
         }
     }
 
@@ -1195,12 +1195,12 @@ http {
         listen 80;
         server_name nginx-handbook.test;
 
-		location ^~ /Agatha8 {
-        	return 200 "prefix matched.\n";
+        location ^~ /Agatha8 {
+            return 200 "prefix matched.\n";
         }
 
         location ~* /agatha[0-9] {
-        	return 200 "regex matched.\n";
+            return 200 "regex matched.\n";
         }
     }
 
