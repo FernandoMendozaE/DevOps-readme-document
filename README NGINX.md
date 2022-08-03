@@ -1154,7 +1154,7 @@ http {
         listen 80;
         server_name nginx-handbook.test;
 
-		location /Agatha8 {
+		    location /Agatha8 {
         	return 200 "prefix matched.\n";
         }
 
@@ -1181,7 +1181,7 @@ curl -i http://nginx-handbook.test/Agatha8
 # regex matched.
 ```
 
-Pero esta prioridad se puede cambiar un poco. El último tipo de coincidencia en NGINX es una coincidencia de prefijo preferencial . Para convertir una coincidencia de prefijo en preferencial, debe incluir el `^~` modificador antes del URI de ubicación:
+Pero esta prioridad se puede cambiar un poco. El último tipo de coincidencia en NGINX es una **coincidencia de prefijo preferencial**. Para convertir una coincidencia de prefijo en preferencial, debe incluir el `^~` modificador antes del URI de ubicación:
 
 ```sh
 events {
