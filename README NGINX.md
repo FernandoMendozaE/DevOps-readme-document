@@ -39,7 +39,7 @@
         <li><a href="#instalar-nginx">Instalar NGINX</a></li>
       </ul>
     </li>
-    <li><a href="#usage">Usage</a></li>
+    <li><a href="#introducción-a-los-archivos-de-configuración-de-nginx">Introducción a los archivos de configuración de NGINX</a></li>
     <li><a href="#roadmap">Roadmap</a></li>
     <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
@@ -208,7 +208,7 @@ sudo apt install nginx -y
 
 Una vez que se realiza la instalación, NGINX debe registrarse automáticamente como un `systemd` servicio y debe estar ejecutándose. Para verificar, ejecute el siguiente comando:
 
-```
+```sh
 sudo systemctl status nginx
 
 # ● nginx.service - A high performance web server and a reverse proxy server
@@ -230,6 +230,141 @@ Finalmente, para una verificación visual de que todo funciona correctamente, vi
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
+### Introducción a los archivos de configuración de NGINX
+
+Como servidor web, el trabajo de NGINX es servir contenido estático o dinámico a los clientes. Pero la forma en que se servirá ese contenido generalmente se controla mediante archivos de configuración.
+
+Los archivos de configuración de NGINX terminan con la `.conf` extensión y generalmente se encuentran dentro del `/etc/nginx/` directorio. Comencemos `cd` ingresando a este directorio y obteniendo una lista de todos los archivos:
+
+```sh
+cd /etc/nginx
+
+# lista archivos en formato largo con tamaños de archivo legibles
+ls -lh
+
+# drwxr-xr-x 2 root root 4.0K Apr 21  2020 conf.d
+# -rw-r--r-- 1 root root 1.1K Feb  4  2019 fastcgi.conf
+# -rw-r--r-- 1 root root 1007 Feb  4  2019 fastcgi_params
+# -rw-r--r-- 1 root root 2.8K Feb  4  2019 koi-utf
+# -rw-r--r-- 1 root root 2.2K Feb  4  2019 koi-win
+# -rw-r--r-- 1 root root 3.9K Feb  4  2019 mime.types
+# drwxr-xr-x 2 root root 4.0K Apr 21  2020 modules-available
+# drwxr-xr-x 2 root root 4.0K Apr 17 14:42 modules-enabled
+# -rw-r--r-- 1 root root 1.5K Feb  4  2019 nginx.conf
+# -rw-r--r-- 1 root root  180 Feb  4  2019 proxy_params
+# -rw-r--r-- 1 root root  636 Feb  4  2019 scgi_params
+# drwxr-xr-x 2 root root 4.0K Apr 17 14:42 sites-available
+# drwxr-xr-x 2 root root 4.0K Apr 17 14:42 sites-enabled
+# drwxr-xr-x 2 root root 4.0K Apr 17 14:42 snippets
+# -rw-r--r-- 1 root root  664 Feb  4  2019 uwsgi_params
+# -rw-r--r-- 1 root root 3.0K Feb  4  2019 win-utf
+```
+
+Entre estos archivos, debe haber uno llamado nginx.conf . Este es el archivo de configuración principal para NGINX. Puedes echar un vistazo al contenido de este archivo usando el `cat` programa:
+
+```sh
+cat nginx.conf
+
+# user www-data;
+# worker_processes auto;
+# pid /run/nginx.pid;
+# include /etc/nginx/modules-enabled/*.conf;
+
+# events {
+#     worker_connections 768;
+#     # multi_accept on;
+# }
+
+# http {
+
+#     ##
+#     # Basic Settings
+#     ##
+
+#     sendfile on;
+#     tcp_nopush on;
+#     tcp_nodelay on;
+#     keepalive_timeout 65;
+#     types_hash_max_size 2048;
+#     # server_tokens off;
+
+#     # server_names_hash_bucket_size 64;
+#     # server_name_in_redirect off;
+
+#     include /etc/nginx/mime.types;
+#     default_type application/octet-stream;
+
+#     ##
+#     # SSL Settings
+#     ##
+
+#     ssl_protocols TLSv1 TLSv1.1 TLSv1.2 TLSv1.3; # Dropping SSLv3, ref: POODLE
+#     ssl_prefer_server_ciphers on;
+
+#     ##
+#     # Logging Settings
+#     ##
+
+#     access_log /var/log/nginx/access.log;
+#     error_log /var/log/nginx/error.log;
+
+#     ##
+#     # Gzip Settings
+#     ##
+
+#     gzip on;
+
+#     # gzip_vary on;
+#     # gzip_proxied any;
+#     # gzip_comp_level 6;
+#     # gzip_buffers 16 8k;
+#     # gzip_http_version 1.1;
+#     # gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+
+#     ##
+#     # Virtual Host Configs
+#     ##
+
+#     include /etc/nginx/conf.d/*.conf;
+#     include /etc/nginx/sites-enabled/*;
+# }
+
+
+# #mail {
+# #    # See sample authentication script at:
+# #    # http://wiki.nginx.org/ImapAuthenticateWithApachePhpScript
+# #
+# #    # auth_http localhost/auth.php;
+# #    # pop3_capabilities "TOP" "USER";
+# #    # imap_capabilities "IMAP4rev1" "UIDPLUS";
+# #
+# #    server {
+# #        listen     localhost:110;
+# #        protocol   pop3;
+# #        proxy      on;
+# #    }
+# #
+# #    server {
+# #        listen     localhost:143;
+# #        protocol   imap;
+# #        proxy      on;
+# #    }
+# #}
+```
+
+Intentar comprender este archivo en su estado actual será una pesadilla. Así que cambiemos el nombre del archivo y creemos uno nuevo vacío:
+
+```sh
+# renames the file
+sudo mv nginx.conf nginx.conf.backup
+
+# creates a new file
+sudo touch nginx.con
+```
+
+Le **recomiendo encarecidamente** que no edite el archivo original `nginx.conf` a menos que sepa absolutamente lo que está haciendo. Con fines de aprendizaje, puede cambiarle el nombre.
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
 <!-- GETTING STARTED -->
 
 ## Getting Started
