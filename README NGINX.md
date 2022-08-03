@@ -31,7 +31,7 @@
     <li>
       <a href="#cómo-instalar-nginx">Cómo instalar NGINX</a>
       <ul>
-        <li><a href="#cómo-maquina-virtual-local-con-vagrant">Cómo máquina virtual local con Vagrant</a>
+        <li><a href="#cómo-máquina-virtual-local-con-vagrant">Cómo máquina virtual local con Vagrant</a>
           <ul>
             <li><a href="#agregar-dominio-a-su-archivo-de-hosts">Agregar dominio a su archivo de hosts</a>
           </ul>
@@ -40,11 +40,23 @@
       </ul>
     </li>
     <li><a href="#introducción-a-los-archivos-de-configuración-de-nginx">Introducción a los archivos de configuración de NGINX</a></li>
+    <li>
+      <a href="#cómo-configurar-un-servidor-web-básico">Cómo configurar un servidor web básico</a>
+      <ul>
+        <li><a href="#cómo-escribir-su-primer-archivo-de-configuración">Cómo escribir su primer archivo de configuración</a></li>
+        <li><a href="#cómo-validar-y-recargar-archivos-de-configuración">Cómo validar y recargar archivos de configuración</a></li>
+        <li><a href="#cómo-entender-directivas-y-contextos-en-nginx">Cómo entender directivas y contextos en NGINX</a></li>
+        <li><a href="#cómo-servir-contenido-estático-usando-nginx">Cómo servir contenido estático usando NGINX</a></li>
+        <li><a href="#manejo-de-tipos-de-archivos-estáticos-en-nginx">Manejo de tipos de archivos estáticos en NGINX</a></li>
+        <li><a href="#cómo-incluir-archivos-de-configuración-parciales">Cómo incluir archivos de configuración parciales</a></li>
+      </ul>
+    </li>
     <li><a href="#roadmap">Roadmap</a></li>
     <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
     <li><a href="#acknowledgments">Acknowledgments</a></li>
+
   </ol>
 </details>
 
@@ -260,7 +272,7 @@ ls -lh
 # -rw-r--r-- 1 root root 3.0K Feb  4  2019 win-utf
 ```
 
-Entre estos archivos, debe haber uno llamado nginx.conf . Este es el archivo de configuración principal para NGINX. Puedes echar un vistazo al contenido de este archivo usando el `cat` programa:
+Entre estos archivos, debe haber uno llamado **nginx.conf** . Este es el archivo de configuración principal para NGINX. Puedes echar un vistazo al contenido de este archivo usando el `cat` programa:
 
 ```sh
 cat nginx.conf
@@ -365,6 +377,91 @@ sudo touch nginx.con
 Le **recomiendo encarecidamente** que no edite el archivo original `nginx.conf` a menos que sepa absolutamente lo que está haciendo. Con fines de aprendizaje, puede cambiarle el nombre.
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
+
+### Cómo configurar un servidor web básico
+
+El objetivo de esta sección es presentarle la sintaxis y los conceptos fundamentales de los archivos de configuración de NGINX.
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
+### Cómo escribir su primer archivo de configuración
+
+Comience abriendo el `nginx.conf `archivo recién creado con el editor de texto `nvim` :
+
+```sh
+sudoedit /etc/nginx/nginx.conf
+```
+
+Después de abrir el archivo, actualice su contenido para que se vea así:
+
+```sh
+events {
+
+}
+
+http {
+
+    server {
+
+        listen 80;
+        server_name nginx-handbook.test;
+
+        return 200 "Bonjour, mon ami!\n";
+    }
+
+}
+```
+
+Si tiene experiencia en la creación de API REST, puede adivinar por la return 200 "Bonjour, mon ami!\n";línea que el servidor se ha configurado para responder con un código de estado de 200 y el mensaje "¡Bonjour, mon ami!"
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
+### Cómo validar y recargar archivos de configuración
+
+Después de escribir un nuevo archivo de configuración o actualizar uno antiguo, lo primero que debe hacer es verificar si hay errores de sintaxis en el archivo. El `nginx` binario incluye una opción `-t` para hacer precisamente eso.
+
+```sh
+sudo nginx -t
+
+# nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+# nginx: configuration file /etc/nginx/nginx.conf test is successful
+```
+
+Si tiene errores de sintaxis, este comando le informará sobre ellos, incluido el número de línea.
+
+Si actualiza el archivo de configuración, deberá indicar a NGINX explícitamente que vuelva a cargar el archivo de configuración. Hay dos maneras de hacerlo.
+
+- Puede reiniciar el servicio NGINX ejecutando el comando:
+  ```sh
+  sudo systemctl restart nginx
+  ```
+- Puede enviar una `reload` señal a NGINX ejecutando el comando:
+
+  ```sh
+  sudo nginx -s reload
+  ```
+
+  La `-s` opción se utiliza para enviar varias señales a NGINX. Las señales disponibles son `stop`, `quity` . Entre las dos formas que acabo de mencionar, prefiero la segunda simplemente porque requiere menos tipeo `reload reopen`
+
+Una vez que haya recargado el archivo de configuración puede verlo en acción enviando una simple solicitud de obtención al servidor:
+
+```sh
+curl -i http://nginx-handbook.test
+
+# HTTP/1.1 200 OK
+# Server: nginx/1.18.0 (Ubuntu)
+# Date: Wed, 21 Apr 2021 10:03:33 GMT
+# Content-Type: text/plain
+# Content-Length: 18
+# Connection: keep-alive
+
+# Bonjour, mon ami!
+```
+
+El servidor responde con un código de estado de 200 y el mensaje esperado.
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
 <!-- GETTING STARTED -->
 
 ## Getting Started
