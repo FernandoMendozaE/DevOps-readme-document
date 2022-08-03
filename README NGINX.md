@@ -1321,6 +1321,139 @@ curl http://nginx-handbook.test?name=Farhan
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
+### Redirecciones y reescrituras
+
+Una redirección en NGINX es igual que las redirecciones en cualquier otra plataforma. Para demostrar cómo funcionan los redireccionamientos, actualice su configuración para que se vea así:
+
+```sh
+events {
+
+}
+
+http {
+
+    include /etc/nginx/mime.types;
+
+    server {
+
+        listen 80;
+        server_name nginx-handbook.test;
+
+        root /srv/nginx-handbook-projects/static-demo;
+
+        location = /index_page {
+                return 307 /index.html;
+        }
+
+        location = /about_page {
+                return 307 /about.html;
+        }
+    }
+}
+```
+
+Ahora, si envía una solicitud a http://nginx-handbook.test/about_page, será redirigido a http://nginx-handbook.test/about.html:
+
+```sh
+curl -I http://nginx-handbook.test/about_page
+
+# HTTP/1.1 307 Temporary Redirect
+# Server: nginx/1.18.0 (Ubuntu)
+# Date: Thu, 22 Apr 2021 18:02:04 GMT
+# Content-Type: text/html
+# Content-Length: 180
+# Location: http://nginx-handbook.test/about.html
+# Connection: keep-alive
+```
+
+Como puede ver, el servidor respondió con un código de estado de 307 y la ubicación indica http://nginx-handbook.test/about.html. Si visita http://nginx-handbook.test/about_page desde un navegador, verá que la URL cambiará automáticamente a http://nginx-handbook.test/about.html.
+
+Una `rewrite` directiva, sin embargo, funciona un poco diferente. Cambia la URI internamente, sin avisar al usuario. Para verlo en acción, actualice su configuración de la siguiente manera:
+
+```sh
+events {
+
+}
+
+http {
+
+    include /etc/nginx/mime.types;
+
+    server {
+
+        listen 80;
+        server_name nginx-handbook.test;
+
+        root /srv/nginx-handbook-projects/static-demo;
+
+        rewrite /index_page /index.html;
+
+        rewrite /about_page /about.html;
+    }
+}
+```
+
+Ahora, si envía una solicitud a http://nginx-handbook/about_page URI, obtendrá un código de respuesta 200 y el código HTML para el archivo about.html en respuesta:
+
+```sh
+curl -i http://nginx-handbook.test/about_page
+
+# HTTP/1.1 200 OK
+# Server: nginx/1.18.0 (Ubuntu)
+# Date: Thu, 22 Apr 2021 18:09:31 GMT
+# Content-Type: text/html
+# Content-Length: 960
+# Last-Modified: Wed, 21 Apr 2021 11:27:06 GMT
+# Connection: keep-alive
+# ETag: "60800c0a-3c0"
+# Accept-Ranges: bytes
+
+# <!DOCTYPE html>
+# <html lang="en">
+# <head>
+#     <meta charset="UTF-8">
+#     <meta http-equiv="X-UA-Compatible" content="IE=edge">
+#     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+#     <title>NGINX Handbook Static Demo</title>
+#     <link rel="stylesheet" href="mini.min.css">
+#     <style>
+#         .container {
+#             max-width: 1024px;
+#             margin-left: auto;
+#             margin-right: auto;
+#         }
+#
+#         h1 {
+#             text-align: center;
+#         }
+#     </style>
+# </head>
+# <body class="container">
+#     <header>
+#         <a class="button" href="index.html">Index</a>
+#         <a class="button" href="about.html">About</a>
+#         <a class="button" href="nothing">Nothing</a>
+#     </header>
+#     <div class="card fluid">
+#         <img src="./the-nginx-handbook.jpg" alt="The NGINX Handbook Cover Image">
+#     </div>
+#     <div class="card fluid">
+#         <h1>this is the <strong>about.html</strong> file</h1>
+#     </div>
+# </body>
+# </html>
+```
+
+Y si visita la URI usando un navegador, verá la página about.html mientras que la URL permanece sin cambios:
+
+<div align="center"> 
+  <img src="https://www.freecodecamp.org/news/content/images/2021/04/rewrite.png" alt="screenshot" />
+</div>
+
+Además de la forma en que se maneja el cambio de URI, hay otra diferencia entre una redirección y una reescritura. Cuando ocurre una reescritura, serverNGINX vuelve a evaluar el contexto. Entonces, una reescritura es una operación más costosa que una redirección.
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
 ```sh
 
 ```
@@ -1337,22 +1470,11 @@ curl http://nginx-handbook.test?name=Farhan
 
 ```
 
-```sh
+<p align="right">(<a href="#top">volver arriba</a>)</p>
 
-```
+<p align="right">(<a href="#top">volver arriba</a>)</p>
 
-```sh
-
-```
-
-```sh
-
-```
-
-```sh
-
-```
-
+<p align="right">(<a href="#top">volver arriba</a>)</p>
 <!-- GETTING STARTED -->
 
 ## Getting Started
