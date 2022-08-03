@@ -925,11 +925,11 @@ La configuración que escribió en la sección anterior era una configuración d
 
 Entonces, si el cliente solicita archivos existentes en la raíz, como `index.html`, `about.html` o `mini.min.css` NGINX devolverá el archivo. Pero si visita una ruta como http://nginx-handbook.test/nothing, responderá con la página 404 predeterminada:
 
-En esta sección, aprenderá sobre el `location` contexto, las variables, las redirecciones, las reescrituras y la `try_files` directiva.
-
 <div align="center"> 
   <img src="https://www.freecodecamp.org/news/content/images/size/w1600/2021/04/image-93.png" width="800"/>
 </div>
+
+En esta sección, aprenderá sobre el `location` contexto, las variables, las redirecciones, las reescrituras y la `try_files` directiva.
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
