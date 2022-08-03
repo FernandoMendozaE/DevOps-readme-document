@@ -1537,6 +1537,7 @@ Entonces, si visita http://nginx-handbook.test/index.html, debería obtener la p
 </div>
 
 <br>
+<br>
 
 Pero si solicita un archivo que no existe, obtendrá la respuesta de la` /not_found` ubicación:
 
