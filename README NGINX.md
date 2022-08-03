@@ -1663,7 +1663,7 @@ http {
         }
 
         location = /admin {
-            access_log /var/logs/nginx/admin.log;
+            access_log /var/log/nginx/admin.log;
 
             return 200 "this will be logged in a separate file.\n";
         }
@@ -1677,7 +1677,20 @@ http {
 }
 ```
 
-La primera `access_log` directiva dentro del bloque de ubicación /admin le indica a NGINX que escriba cualquier registro de acceso de este URI en el `/var/logs/nginx/admin.log` archivo. El segundo dentro de la ubicación /no_logging desactiva completamente los registros de acceso para esta ubicación.
+La primera `access_log` directiva dentro del bloque de ubicación /admin le indica a NGINX que escriba cualquier registro de acceso de este URI en el `/var/log/nginx/admin.log` archivo. El segundo dentro de la ubicación /no_logging desactiva completamente los registros de acceso para esta ubicación.
+
+Comencemos por vaciar los archivos y crearlos.
+
+```sh
+# delete the old files
+sudo rm /var/log/nginx/access.log /var/log/nginx/error.log
+
+# create new files
+sudo touch /var/log/nginx/access.log /var/log/nginx/error.log /var/log/nginx/admin.log
+
+# reopen the log files
+sudo nginx -s reopen
+```
 
 Valide y vuelva a cargar la configuración. Ahora, si envía solicitudes a estas ubicaciones e inspecciona los archivos de registro, debería ver algo como esto:
 
