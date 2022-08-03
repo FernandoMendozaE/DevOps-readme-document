@@ -1450,9 +1450,159 @@ Y si visita la URI usando un navegador, verá la página about.html mientras que
   <img src="https://www.freecodecamp.org/news/content/images/2021/04/rewrite.png" alt="screenshot" />
 </div>
 
-Además de la forma en que se maneja el cambio de URI, hay otra diferencia entre una redirección y una reescritura. Cuando ocurre una reescritura, serverNGINX vuelve a evaluar el contexto. Entonces, una reescritura es una operación más costosa que una redirección.
+Además de la forma en que se maneja el cambio de URI, hay otra diferencia entre una redirección y una reescritura. Cuando ocurre una reescritura, `server` NGINX vuelve a evaluar el contexto. Entonces, una reescritura es una operación más costosa que una redirección.
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
+
+### Cómo probar varios archivos
+
+El concepto final que mostraré en esta sección es la `try_files` directiva. En lugar de responder con un solo archivo, la `try_files` directiva le permite comprobar la existencia de varios archivos.
+
+```sh
+events {
+
+}
+
+http {
+
+    include /etc/nginx/mime.types;
+
+    server {
+
+        listen 80;
+        server_name nginx-handbook.test;
+
+        root /srv/nginx-handbook-projects/static-demo;
+
+        try_files /the-nginx-handbook.jpg /not_found;
+
+        location /not_found {
+            return 404 "sadly, you've hit a brick wall buddy!\n";
+        }
+    }
+}
+```
+
+Como puede ver, `try_files` se ha agregado una nueva directiva. Al escribir `try_files /the-nginx-handbook.jpg /not_found;` , le indica a NGINX que busque un archivo llamado the-nginx-handbook.jpg en la raíz cada vez que se recibe una solicitud. Si no existe, vaya a la `/not_found` ubicación.
+
+Ahora, si visitas el servidor, verás la imagen:
+
+<div align="center"> 
+  <img src="https://www.freecodecamp.org/news/content/images/size/w1600/2021/04/image-94.png" alt="screenshot" />
+</div>
+
+Pero si actualiza la configuración para intentar con un archivo inexistente como blackhole.jpg, obtendrá una respuesta 404 con el mensaje "sadly, you've hit a brick wall buddy!".
+
+Ahora, el problema de escribir una `try_files` directiva de esta manera es que no importa qué URL visite, siempre que el servidor reciba una solicitud y el archivo the-nginx-handbook.jpg se encuentre en el disco, NGINX lo devolverá.
+
+<div align="center"> 
+  <img src="https://www.freecodecamp.org/news/content/images/2021/04/try-files.png" alt="screenshot" />
+</div>
+
+Y es por eso `try_files` que a menudo se usa con la `$uri` variable NGINX.
+
+```sh
+events {
+
+}
+
+http {
+
+    include /etc/nginx/mime.types;
+
+    server {
+
+        listen 80;
+        server_name nginx-handbook.test;
+
+        root /srv/nginx-handbook-projects/static-demo;
+
+        try_files $uri /not_found;
+
+        location /not_found {
+            return 404 "sadly, you've hit a brick wall buddy!\n";
+        }
+    }
+}
+```
+
+Al escribir `try_files $uri /not_found;` , le está indicando a NGINX que primero intente obtener el URI solicitado por el cliente. Si no encuentra ese, intente con el siguiente.
+
+Entonces, si visita http://nginx-handbook.test/index.html, debería obtener la página index.html anterior. Lo mismo ocurre con la página about.html:
+
+<div align="center"> 
+  <img src="https://www.freecodecamp.org/news/content/images/size/w1600/2021/04/image-95.png" alt="screenshot" />
+</div>
+
+Pero si solicita un archivo que no existe, obtendrá la respuesta de la` /not_found` ubicación:
+
+```sh
+curl -i http://nginx-handbook.test/nothing
+
+# HTTP/1.1 404 Not Found
+# Server: nginx/1.18.0 (Ubuntu)
+# Date: Thu, 22 Apr 2021 20:01:57 GMT
+# Content-Type: text/plain
+# Content-Length: 38
+# Connection: keep-alive
+
+# sadly, you've hit a brick wall buddy!
+```
+
+Una cosa que quizás ya haya notado es que si visita la raíz del servidor http://nginx-handbook.test, obtiene la respuesta 404.
+
+Esto se debe a que cuando accede a la raíz del servidor, la $urivariable no corresponde a ningún archivo existente, por lo que NGINX le proporciona la ubicación alternativa. Si desea solucionar este problema, actualice su configuración de la siguiente manera:
+
+```sh
+events {
+
+}
+
+http {
+
+    include /etc/nginx/mime.types;
+
+    server {
+
+        listen 80;
+        server_name nginx-handbook.test;
+
+        root /srv/nginx-handbook-projects/static-demo;
+
+        try_files $uri $uri/ /not_found;
+
+        location /not_found {
+            return 404 "sadly, you've hit a brick wall buddy!\n";
+        }
+    }
+}
+```
+
+Al escribir `try_files $uri $uri/ /not_found;` , le indica a NGINX que primero intente obtener el URI solicitado. Si eso no funciona, intente con el URI solicitado como un directorio, y cada vez que NGINX termina en un directorio, automáticamente comienza a buscar un archivo index.html.
+
+Ahora, si visita el servidor, debería obtener el archivo index.html correctamente:
+
+<div align="center"> 
+  <img src="https://www.freecodecamp.org/news/content/images/size/w1600/2021/04/image-95.png" alt="screenshot" />
+</div>
+
+El `try_files` es el tipo de directiva que se puede utilizar en una serie de variaciones. En las próximas secciones, encontrará algunas otras variaciones, pero le sugiero que investigue un poco en Internet sobre los diferentes usos de esta directiva por su cuenta.s
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
 
 ```sh
 
