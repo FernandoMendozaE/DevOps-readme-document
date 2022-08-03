@@ -737,6 +737,177 @@ Visite el servidor para una verificación visual [http://nginx-handbook.test](ht
 <div align="center"> 
   <img src="https://www.freecodecamp.org/news/content/images/size/w1600/2021/04/image-92.png" alt="screenshot" />
 </div>
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
+### Cómo incluir archivos de configuración parciales
+
+La asignación de tipos de archivos dentro del `types` contexto puede funcionar para proyectos pequeños, pero para proyectos más grandes puede ser engorroso y propenso a errores.
+
+NGINX proporciona una solución para este problema. Si enumera los archivos dentro del `/etc/nginx` directorio una vez más, verá un archivo llamado mime.types.
+
+```sh
+ls -lh /etc/nginx
+
+# drwxr-xr-x 2 root root 4.0K Apr 21  2020 conf.d
+# -rw-r--r-- 1 root root 1.1K Feb  4  2019 fastcgi.conf
+# -rw-r--r-- 1 root root 1007 Feb  4  2019 fastcgi_params
+# -rw-r--r-- 1 root root 2.8K Feb  4  2019 koi-utf
+# -rw-r--r-- 1 root root 2.2K Feb  4  2019 koi-win
+# -rw-r--r-- 1 root root 3.9K Feb  4  2019 mime.types
+# drwxr-xr-x 2 root root 4.0K Apr 21  2020 modules-available
+# drwxr-xr-x 2 root root 4.0K Apr 17 14:42 modules-enabled
+# -rw-r--r-- 1 root root 1.5K Feb  4  2019 nginx.conf
+# -rw-r--r-- 1 root root  180 Feb  4  2019 proxy_params
+# -rw-r--r-- 1 root root  636 Feb  4  2019 scgi_params
+# drwxr-xr-x 2 root root 4.0K Apr 17 14:42 sites-available
+# drwxr-xr-x 2 root root 4.0K Apr 17 14:42 sites-enabled
+# drwxr-xr-x 2 root root 4.0K Apr 17 14:42 snippets
+# -rw-r--r-- 1 root root  664 Feb  4  2019 uwsgi_params
+# -rw-r--r-- 1 root root 3.0K Feb  4  2019 win-utf
+```
+
+Echemos un vistazo al contenido de este archivo:
+
+```sh
+cat /etc/mime.types
+
+# types {
+#     text/html                             html htm shtml;
+#     text/css                              css;
+#     text/xml                              xml;
+#     image/gif                             gif;
+#     image/jpeg                            jpeg jpg;
+#     application/javascript                js;
+#     application/atom+xml                  atom;
+#     application/rss+xml                   rss;
+
+#     text/mathml                           mml;
+#     text/plain                            txt;
+#     text/vnd.sun.j2me.app-descriptor      jad;
+#     text/vnd.wap.wml                      wml;
+#     text/x-component                      htc;
+
+#     image/png                             png;
+#     image/tiff                            tif tiff;
+#     image/vnd.wap.wbmp                    wbmp;
+#     image/x-icon                          ico;
+#     image/x-jng                           jng;
+#     image/x-ms-bmp                        bmp;
+#     image/svg+xml                         svg svgz;
+#     image/webp                            webp;
+
+#     application/font-woff                 woff;
+#     application/java-archive              jar war ear;
+#     application/json                      json;
+#     application/mac-binhex40              hqx;
+#     application/msword                    doc;
+#     application/pdf                       pdf;
+#     application/postscript                ps eps ai;
+#     application/rtf                       rtf;
+#     application/vnd.apple.mpegurl         m3u8;
+#     application/vnd.ms-excel              xls;
+#     application/vnd.ms-fontobject         eot;
+#     application/vnd.ms-powerpoint         ppt;
+#     application/vnd.wap.wmlc              wmlc;
+#     application/vnd.google-earth.kml+xml  kml;
+#     application/vnd.google-earth.kmz      kmz;
+#     application/x-7z-compressed           7z;
+#     application/x-cocoa                   cco;
+#     application/x-java-archive-diff       jardiff;
+#     application/x-java-jnlp-file          jnlp;
+#     application/x-makeself                run;
+#     application/x-perl                    pl pm;
+#     application/x-pilot                   prc pdb;
+#     application/x-rar-compressed          rar;
+#     application/x-redhat-package-manager  rpm;
+#     application/x-sea                     sea;
+#     application/x-shockwave-flash         swf;
+#     application/x-stuffit                 sit;
+#     application/x-tcl                     tcl tk;
+#     application/x-x509-ca-cert            der pem crt;
+#     application/x-xpinstall               xpi;
+#     application/xhtml+xml                 xhtml;
+#     application/xspf+xml                  xspf;
+#     application/zip                       zip;
+
+#     application/octet-stream              bin exe dll;
+#     application/octet-stream              deb;
+#     application/octet-stream              dmg;
+#     application/octet-stream              iso img;
+#     application/octet-stream              msi msp msm;
+
+#     application/vnd.openxmlformats-officedocument.wordprocessingml.document    docx;
+#     application/vnd.openxmlformats-officedocument.spreadsheetml.sheet          xlsx;
+#     application/vnd.openxmlformats-officedocument.presentationml.presentation  pptx;
+
+#     audio/midi                            mid midi kar;
+#     audio/mpeg                            mp3;
+#     audio/ogg                             ogg;
+#     audio/x-m4a                           m4a;
+#     audio/x-realaudio                     ra;
+
+#     video/3gpp                            3gpp 3gp;
+#     video/mp2t                            ts;
+#     video/mp4                             mp4;
+#     video/mpeg                            mpeg mpg;
+#     video/quicktime                       mov;
+#     video/webm                            webm;
+#     video/x-flv                           flv;
+#     video/x-m4v                           m4v;
+#     video/x-mng                           mng;
+#     video/x-ms-asf                        asx asf;
+#     video/x-ms-wmv                        wmv;
+#     video/x-msvideo                       avi;
+# }
+```
+
+El archivo contiene una larga lista de tipos de archivos y sus extensiones. Para usar este archivo dentro de su archivo de configuración, actualice su configuración para que tenga el siguiente aspecto:
+
+```sh
+events {
+
+}
+
+http {
+
+    include /etc/nginx/mime.types;
+
+    server {
+
+        listen 80;
+        server_name nginx-handbook.test;
+
+        root /srv/nginx-handbook-projects/static-demo;
+    }
+
+}
+```
+
+El antiguo `types` contexto ahora ha sido reemplazado por una nueva `include` directiva. Como sugiere el nombre, esta directiva le permite incluir contenido de otros archivos de configuración.
+
+Valide y vuelva a cargar el archivo de configuración y envíe una solicitud para el `mini.min.css` archivo una vez más:
+
+```sh
+curl -I http://nginx-handbook.test/mini.min.css
+
+# HTTP/1.1 200 OK
+# Server: nginx/1.18.0 (Ubuntu)
+# Date: Wed, 21 Apr 2021 12:29:35 GMT
+# Content-Type: text/css
+# Content-Length: 46887
+# Last-Modified: Wed, 21 Apr 2021 11:27:06 GMT
+# Connection: keep-alive
+# ETag: "60800c0a-b727"
+# Accept-Ranges: bytes
+```
+
+Visite el servidor para una verificación visual [http://nginx-handbook.test](http://nginx-handbook.test) :
+
+<div align="center"> 
+  <img src="https://www.freecodecamp.org/news/content/images/size/w1600/2021/04/image-92.png" alt="screenshot" />
+</div>
+
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
 <!-- GETTING STARTED -->
