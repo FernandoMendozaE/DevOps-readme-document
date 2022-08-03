@@ -928,7 +928,7 @@ Entonces, si el cliente solicita archivos existentes en la raíz, como `index.ht
 En esta sección, aprenderá sobre el `location` contexto, las variables, las redirecciones, las reescrituras y la `try_files` directiva.
 
 <div align="center"> 
-  <img src="https://www.freecodecamp.org/news/content/images/size/w1600/2021/04/image-93.png" />
+  <img src="https://www.freecodecamp.org/news/content/images/size/w1600/2021/04/image-93.png" width="500"/>
 </div>
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
