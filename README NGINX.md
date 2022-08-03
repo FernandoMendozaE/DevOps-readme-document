@@ -60,7 +60,7 @@
         <li><a href="#cómo-probar-varios-archivos">Cómo probar varios archivos</a></li>
       </ul>
     </li>
-    <li><a href="#roadmap">Roadmap</a></li>
+    <li><a href="#iniciar-sesión-en-nginx">Iniciar sesión en NGINX</a></li>
     <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
@@ -1592,43 +1592,255 @@ Ahora, si visita el servidor, debería obtener el archivo index.html correctamen
   <img src="https://www.freecodecamp.org/news/content/images/size/w1600/2021/04/image-95.png" alt="screenshot" />
 </div>
 
-El `try_files` es el tipo de directiva que se puede utilizar en una serie de variaciones. En las próximas secciones, encontrará algunas otras variaciones, pero le sugiero que investigue un poco en Internet sobre los diferentes usos de esta directiva por su cuenta.s
-
-```sh
-
-```
-
-```sh
-
-```
-
-```sh
-
-```
-
-```sh
-
-```
-
-```sh
-
-```
-
-```sh
-
-```
-
-```sh
-
-```
-
-```sh
-
-```
+El `try_files` es el tipo de directiva que se puede utilizar en una serie de variaciones. En las próximas secciones, encontrará algunas otras variaciones, pero le sugiero que investigue un poco en Internet sobre los diferentes usos de esta directiva por su cuenta.
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
+### Iniciar sesión en NGINX
+
+De forma predeterminada, los archivos de registro de NGINX se encuentran dentro de `/var/log/nginx` . Si enumera el contenido de este directorio, puede ver algo como lo siguiente:
+
+```sh
+ls -lh /var/log/nginx/
+
+# -rw-r----- 1 www-data adm     0 Apr 25 07:34 access.log
+# -rw-r----- 1 www-data adm     0 Apr 25 07:34 error.log
+```
+
+Comencemos por vaciar los dos archivos.
+
+```sh
+# delete the old files
+sudo rm /var/log/nginx/access.log /var/log/nginx/error.log
+
+# create new files
+sudo touch /var/log/nginx/access.log /var/log/nginx/error.log
+
+# reopen the log files
+sudo nginx -s reopen
+```
+
+Si no envía una `reopen` señal a NGINX, seguirá escribiendo registros en los flujos abiertos anteriormente y los nuevos archivos permanecerán vacíos.
+
+Ahora, para realizar una entrada en el registro de acceso, envíe una solicitud al servidor.
+
+```sh
+curl -I http://nginx-handbook.test
+
+# HTTP/1.1 200 OK
+# Server: nginx/1.18.0 (Ubuntu)
+# Date: Sun, 25 Apr 2021 08:35:59 GMT
+# Content-Type: text/html
+# Content-Length: 960
+# Last-Modified: Sun, 25 Apr 2021 08:35:33 GMT
+# Connection: keep-alive
+# ETag: "608529d5-3c0"
+# Accept-Ranges: bytes
+
+sudo cat /var/log/nginx/access.log
+
+# 192.168.20.20 - - [25/Apr/2021:08:35:59 +0000] "HEAD / HTTP/1.1" 200 0 "-" "curl/7.68.0"
+```
+
+Como puede ver, se ha agregado una nueva entrada al archivo access.log. Cualquier solicitud al servidor se registrará en este archivo de forma predeterminada. Pero podemos cambiar este comportamiento usando la `access_log` directiva.
+
+```sh
+events {
+
+}
+
+http {
+
+    include /etc/nginx/mime.types;
+
+    server {
+
+        listen 80;
+        server_name nginx-handbook.test;
+
+        location / {
+            return 200 "this will be logged to the default file.\n";
+        }
+
+        location = /admin {
+            access_log /var/logs/nginx/admin.log;
+
+            return 200 "this will be logged in a separate file.\n";
+        }
+
+        location = /no_logging {
+            access_log off;
+
+            return 200 "this will not be logged.\n";
+        }
+    }
+}
+```
+
+La primera `access_log` directiva dentro del bloque de ubicación /admin le indica a NGINX que escriba cualquier registro de acceso de este URI en el `/var/logs/nginx/admin.log` archivo. El segundo dentro de la ubicación /no_logging desactiva completamente los registros de acceso para esta ubicación.
+
+Valide y vuelva a cargar la configuración. Ahora, si envía solicitudes a estas ubicaciones e inspecciona los archivos de registro, debería ver algo como esto:
+
+```sh
+curl http://nginx-handbook.test/no_logging
+# this will not be logged
+
+sudo cat /var/log/nginx/access.log
+# empty
+
+curl http://nginx-handbook.test/admin
+# this will be logged in a separate file.
+
+sudo cat /var/log/nginx/access.log
+# empty
+
+sudo cat /var/log/nginx/admin.log
+# 192.168.20.20 - - [25/Apr/2021:11:13:53 +0000] "GET /admin HTTP/1.1" 200 40 "-" "curl/7.68.0"
+
+curl  http://nginx-handbook.test/
+# this will be logged to the default file.
+
+sudo cat /var/log/nginx/access.log
+# 192.168.20.20 - - [25/Apr/2021:11:15:14 +0000] "GET / HTTP/1.1" 200 41 "-" "curl/7.68.0"
+```
+
+El archivo error.log, por otro lado, contiene los registros de errores. Para realizar una entrada en error.log, deberá hacer que NGINX se bloquee. Para hacerlo, actualice su configuración de la siguiente manera:
+
+```sh
+events {
+
+}
+
+http {
+
+    include /etc/nginx/mime.types;
+
+    server {
+
+        listen 80;
+        server_name nginx-handbook.test;
+
+        return 200 "..." "...";
+    }
+
+}
+```
+
+Como sabe, la `return` directiva solo toma dos parámetros, pero aquí hemos dado tres. Ahora intente volver a cargar la configuración y aparecerá un mensaje de error:
+
+```sh
+sudo nginx -s reload
+
+# nginx: [emerg] invalid number of arguments in "return" directive in /etc/nginx/nginx.conf:14
+```
+
+Verifique el contenido del registro de errores y el mensaje también debería estar presente allí:
+
+```sh
+sudo cat /var/log/nginx/error.log
+
+# 2021/04/25 08:35:45 [notice] 4169#4169: signal process started
+# 2021/04/25 10:03:18 [emerg] 8434#8434: invalid number of arguments in "return" directive in /etc/nginx/nginx.conf:14
+```
+
+Los mensajes de error tienen niveles. Una `notice` entrada en el registro de errores es inofensiva, pero una `emerg` entrada de emergencia debe abordarse de inmediato.
+
+Hay ocho niveles de mensajes de error:
+
+- `debug` – Información de depuración útil para ayudar a determinar dónde radica el problema.
+- `info`– Mensajes informativos que no es necesario leer pero que puede ser bueno saber.
+- `notice`– Pasó algo normal que vale la pena señalar.
+- `warn`– Algo inesperado sucedió, sin embargo, no es motivo de preocupación.
+- `error`– Algo no tuvo éxito.
+- `crit` – Hay problemas que necesitan ser abordados críticamente.
+- `alert` – Se requiere una acción inmediata.
+- `emerg` – El sistema está en un estado inutilizable y requiere atención inmediata.
+
+De forma predeterminada, NGINX registra todos los niveles de mensajes. Puede anular este comportamiento utilizando la `error_log` directiva. Si desea establecer el nivel mínimo de un mensaje para que sea `warn` , actualice su archivo de configuración de la siguiente manera:
+
+```sh
+events {
+
+}
+
+http {
+
+    include /etc/nginx/mime.types;
+
+    server {
+
+        listen 80;
+        server_name nginx-handbook.test;
+
+    	error_log /var/log/error.log warn;
+
+        return 200 "..." "...";
+    }
+
+}
+```
+
+`warn` Valide y vuelva a cargar la configuración, y de ahora en adelante solo se registrarán los mensajes con un nivel de o superior.
+
+```sh
+cat /var/log/nginx/error.log
+
+# 2021/04/25 11:27:02 [emerg] 12769#12769: invalid number of arguments in "return" directive in /etc/nginx/nginx.conf:16
+```
+
+A diferencia de la salida anterior, aquí no hay `notice` entradas. `emerg` es un error de mayor nivel que `warn` y por eso se ha registrado.
+
+Para la mayoría de los proyectos, dejar la configuración de error como está debería estar bien. La única sugerencia que tengo es establecer el nivel mínimo de error en `warn` . De esta forma, no tendrá que buscar entradas innecesarias en el registro de errores.
+
 <p align="right">(<a href="#top">volver arriba</a>)</p>
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 <!-- GETTING STARTED -->
