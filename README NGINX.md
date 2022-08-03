@@ -367,11 +367,14 @@ cat nginx.conf
 Intentar comprender este archivo en su estado actual será una pesadilla. Así que cambiemos el nombre del archivo y creemos uno nuevo vacío:
 
 ```sh
+# ingresar al archivo nginx
+cd /etc/nginx/
+
 # renames the file
 sudo mv nginx.conf nginx.conf.backup
 
 # creates a new file
-sudo touch nginx.con
+sudo touch nginx.conf
 ```
 
 Le **recomiendo encarecidamente** que no edite el archivo original `nginx.conf` a menos que sepa absolutamente lo que está haciendo. Con fines de aprendizaje, puede cambiarle el nombre.
@@ -462,6 +465,113 @@ El servidor responde con un código de estado de 200 y el mensaje esperado.
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
+### Cómo entender directivas y contextos en NGINX
+
+Las pocas líneas de código que ha escrito aquí, aunque parecen simples, presentan dos de las terminologías más importantes de los archivos de configuración de NGINX. Son **directivas** y **contextos** .
+
+Técnicamente, todo lo que hay dentro de un archivo de configuración de NGINX es una **directiva** . Las directivas son de dos tipos:
+
+- Directivas simples
+- Directivas de bloque
+
+Una _directiva simple_ consiste en el nombre de la directiva y los parámetros delimitados por espacios, como `listen` , `return` y otros. Las directivas simples terminan con punto y coma.
+
+Las _directivas de bloque_ son similares a las directivas simples, excepto que en lugar de terminar con punto y coma, terminan con un par de llaves `{ }` que encierran instrucciones adicionales.
+
+Una directiva de bloque capaz de contener otras directivas en su interior se denomina contexto, es decir `events` , `http` etc. Hay cuatro _contextos_ centrales en NGINX:
+
+- `events { }` – El `events` contexto se usa para establecer la configuración global con respecto a cómo NGINX manejará las solicitudes a nivel general. Solo puede haber un `events` contexto en un archivo de configuración válido.
+
+- `http { }` – Evidente por el nombre, el `http` contexto se usa para definir la configuración con respecto a cómo el servidor manejará las solicitudes HTTP y HTTPS, específicamente. Solo puede haber un `http` contexto en un archivo de configuración válido.
+
+- `server { }` – El `server` contexto está anidado dentro del `http` contexto y se usa para configurar servidores virtuales específicos dentro de un solo host. Puede haber varios `server` contextos en un archivo de configuración válido anidado dentro del `http` contexto. Cada `server` contexto se considera un host virtual.
+
+- `main` – El `main` contexto es el propio archivo de configuración. Cualquier cosa escrita fuera de los tres contextos mencionados anteriormente está en el `main` contexto.
+
+Ya mencioné que puede haber múltiples `server` contextos dentro de un archivo de configuración. Pero cuando una solicitud llega al servidor, ¿cómo sabe NGINX cuál de esos contextos debe manejar la solicitud?
+
+La `listen` directiva es una de las formas de identificar el `server` contexto correcto dentro de una configuración. Considere el siguiente escenario:
+
+```sh
+events {
+
+}
+
+http {
+    server {
+        listen 80;
+        server_name nginx-handbook.test;
+
+        return 200 "hello from port 80!\n";
+    }
+
+
+    server {
+        listen 8080;
+        server_name nginx-handbook.test;
+
+        return 200 "hello from port 8080!\n";
+    }
+}
+```
+
+Ahora, si envía una solicitud a http://nginx-handbook.test:80, recibirá "hola desde el puerto 80". como respuesta. Y si envía una solicitud a http://nginx-handbook.test:8080, recibirá "hola desde el puerto 8080". como respuesta:
+
+```sh
+curl nginx-handbook.test:80
+
+# hello from port 80!
+
+curl nginx-handbook.test:8080
+
+# hello from port 8080!
+```
+
+Estos dos bloques de servidores son como dos personas que sostienen auriculares telefónicos, esperando responder cuando una solicitud llega a uno de sus números. Sus números están indicados por las `listen` directivas.
+
+Además de la `listen` directiva, también existe la `server_name` directiva. Considere el siguiente escenario de una aplicación de administración de biblioteca imaginaria:
+
+```sh
+http {
+    server {
+        listen 80;
+        server_name library.test;
+
+        return 200 "your local library!\n";
+    }
+
+
+    server {
+        listen 80;
+        server_name librarian.library.test;
+
+        return 200 "welcome dear librarian!\n";
+    }
+}
+```
+
+Este es un ejemplo básico de la idea de hosts virtuales. Está ejecutando dos aplicaciones separadas con diferentes nombres de servidor en el mismo servidor.
+
+Para que esta demostración funcione en su sistema, deberá actualizar su `hosts` archivo para incluir también estos dos nombres de dominio:
+
+```sh
+192.168.20.20   library.test
+192.168.20.20   librarian.library.test
+```
+
+Si envía una solicitud a http://library.test, obtendrá "su biblioteca local". como respuesta. Si envía una solicitud a http://librarian.library.test, obtendrá "bienvenido querido bibliotecario". como respuesta.
+
+```sh
+curl http://library.test
+
+# your local library!
+
+curl http://librarian.library.test
+
+# welcome dear librarian!
+```
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
 <!-- GETTING STARTED -->
 
 ## Getting Started
