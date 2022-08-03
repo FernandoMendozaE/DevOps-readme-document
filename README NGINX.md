@@ -1393,7 +1393,7 @@ http {
 }
 ```
 
-Ahora, si envía una solicitud a http://nginx-handbook/about_page URI, obtendrá un código de respuesta 200 y el código HTML para el archivo about.html en respuesta:
+Ahora, si envía una solicitud a http://nginx-handbook.test/about_page URI, obtendrá un código de respuesta 200 y el código HTML para el archivo about.html en respuesta:
 
 ```sh
 curl -i http://nginx-handbook.test/about_page
