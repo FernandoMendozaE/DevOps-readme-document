@@ -609,7 +609,7 @@ ls -lh /
 # drwxr-xr-x  14 root    root    4.0K Apr 21 08:34 var
 ```
 
-Este `/srv` directorio está destinado a contener datos específicos del sitio que son atendidos por este sistema. Ahora `cd` en este directorio y clone el repositorio de código que viene con este libro:
+Este `/srv` directorio está destinado a contener datos específicos del sitio que son atendidos por este sistema. Ahora `cd` en este directorio y clone el repositorio de código que viene como ejemplo:
 
 ```sh
 cd /srv
@@ -652,7 +652,7 @@ El código es casi el mismo, excepto que la `return` directiva ahora ha sido ree
 
 Al escribir `root /srv/nginx-handbook-projects/static-demo` , le está diciendo a NGINX que busque archivos para servir dentro del `/srv/nginx-handbook-projects/static-demo` directorio si llega alguna solicitud a este servidor. Dado que NGINX es un servidor web, es lo suficientemente inteligente como para servir el `index.html` archivo de forma predeterminada.
 
-Veamos si esto funciona o no. Pruebe y vuelva a cargar el archivo de configuración actualizado y visite el servidor. Debería ser recibido con un sitio HTML algo roto:
+Veamos si esto funciona o no. Pruebe y vuelva a cargar el archivo de configuración actualizado y visite el servidor [http://nginx-handbook.test](http://nginx-handbook.test) . Debería ser recibido con un sitio HTML algo roto:
 
 <div align="center"> 
   <img src="https://www.freecodecamp.org/news/content/images/size/w1600/2021/04/image-91.png" alt="screenshot" />
@@ -662,6 +662,81 @@ Aunque NGINX ha servido correctamente el archivo index.html, a juzgar por el asp
 
 Puede pensar que hay algo mal en el archivo CSS. Pero en realidad, el problema está en el archivo de configuración.
 
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
+### Manejo de tipos de archivos estáticos en NGINX
+
+Para depurar el problema al que se enfrenta en este momento, envíe una solicitud del archivo CSS al servidor:
+
+```sh
+curl -I http://nginx-handbook.test/mini.min.css
+
+# HTTP/1.1 200 OK
+# Server: nginx/1.18.0 (Ubuntu)
+# Date: Wed, 21 Apr 2021 12:17:16 GMT
+# Content-Type: text/plain
+# Content-Length: 46887
+# Last-Modified: Wed, 21 Apr 2021 11:27:06 GMT
+# Connection: keep-alive
+# ETag: "60800c0a-b727"
+# Accept-Ranges: bytes
+```
+
+Preste atención al **tipo de contenido** y vea cómo dice **text/plain** y no **text/css** . Esto significa que NGINX está sirviendo este archivo como texto sin formato en lugar de como una hoja de estilo.
+
+Aunque NGINX es lo suficientemente inteligente como para encontrar el `index.html` archivo de forma predeterminada, es bastante tonto cuando se trata de interpretar los tipos de archivos. Para resolver este problema, actualice su configuración una vez más:
+
+```sh
+events {
+
+}
+
+http {
+
+    types {
+        text/html html;
+        text/css css;
+    }
+
+    server {
+
+        listen 80;
+        server_name nginx-handbook.test;
+
+        root /srv/nginx-handbook-projects/static-demo;
+    }
+}
+```
+
+El único cambio que hemos hecho al código es un nuevo `types` contexto anidado dentro del `http` bloque. Como ya habrá adivinado por el nombre, este contexto se utiliza para configurar tipos de archivos.
+
+Al escribir `text/html html` en este contexto, le está diciendo a NGINX que analice cualquier archivo `text/html` que termine con la `html` extensión.
+
+Puede pensar que configurar el tipo de archivo CSS debería ser suficiente, ya que el HTML se analiza correctamente, pero no.
+
+Si introduce un `types` contexto en la configuración, NGINX se vuelve aún más tonto y solo analiza los archivos configurados por usted. Entonces, si solo define `text/css css` en este contexto, NGINX comenzará a analizar el archivo HTML como texto sin formato.
+
+Valide y vuelva a cargar el archivo de configuración recién actualizado y visite el servidor una vez más. Envíe una solicitud para el archivo CSS una vez más, y esta vez el archivo debe analizarse como un archivo de **texto/css** :
+
+```sh
+curl -I http://nginx-handbook.test/mini.min.css
+
+# HTTP/1.1 200 OK
+# Server: nginx/1.18.0 (Ubuntu)
+# Date: Wed, 21 Apr 2021 12:29:35 GMT
+# Content-Type: text/css
+# Content-Length: 46887
+# Last-Modified: Wed, 21 Apr 2021 11:27:06 GMT
+# Connection: keep-alive
+# ETag: "60800c0a-b727"
+# Accept-Ranges: bytes
+```
+
+Visite el servidor para una verificación visual [http://nginx-handbook.test](http://nginx-handbook.test) , y el sitio debería verse mejor esta vez:
+
+<div align="center"> 
+  <img src="https://www.freecodecamp.org/news/content/images/size/w1600/2021/04/image-92.png" alt="screenshot" />
+</div>
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
 <!-- GETTING STARTED -->
