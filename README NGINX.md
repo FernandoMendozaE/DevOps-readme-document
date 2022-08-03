@@ -1154,8 +1154,8 @@ http {
         listen 80;
         server_name nginx-handbook.test;
 
-        location ~* /agatha[0-9] {
-        	return 200 "regex matched.\n";
+        location /Agatha8 {
+        	return 200 "prefix matched.\n";
         }
 
         location ~* /agatha[0-9] {
