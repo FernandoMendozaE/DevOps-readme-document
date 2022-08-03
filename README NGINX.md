@@ -575,6 +575,97 @@ curl http://librarian.library.test
 ```
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
+
+### Cómo servir contenido estático usando NGINX
+
+Para servir contenido estático, primero debe almacenarlo en algún lugar de su servidor. Si enumera los archivos y el directorio en la raíz de su servidor usando `ls` , encontrará un directorio llamado `/srv` allí:
+
+```sh
+ervidor usando ls, encontrará un directorio llamado /srvallí:
+
+ls -lh /
+
+# lrwxrwxrwx   1 root    root       7 Apr 16 02:10 bin -> usr/bin
+# drwxr-xr-x   3 root    root    4.0K Apr 16 02:13 boot
+# drwxr-xr-x  16 root    root    3.8K Apr 21 09:23 dev
+# drwxr-xr-x  92 root    root    4.0K Apr 21 09:24 etc
+# drwxr-xr-x   4 root    root    4.0K Apr 21 08:04 home
+# lrwxrwxrwx   1 root    root       7 Apr 16 02:10 lib -> usr/lib
+# lrwxrwxrwx   1 root    root       9 Apr 16 02:10 lib32 -> usr/lib32
+# lrwxrwxrwx   1 root    root       9 Apr 16 02:10 lib64 -> usr/lib64
+# lrwxrwxrwx   1 root    root      10 Apr 16 02:10 libx32 -> usr/libx32
+# drwx------   2 root    root     16K Apr 16 02:15 lost+found
+# drwxr-xr-x   2 root    root    4.0K Apr 16 02:10 media
+# drwxr-xr-x   2 root    root    4.0K Apr 16 02:10 mnt
+# drwxr-xr-x   2 root    root    4.0K Apr 16 02:10 opt
+# dr-xr-xr-x 152 root    root       0 Apr 21 09:23 proc
+# drwx------   5 root    root    4.0K Apr 21 09:59 root
+# drwxr-xr-x  26 root    root     820 Apr 21 09:47 run
+# lrwxrwxrwx   1 root    root       8 Apr 16 02:10 sbin -> usr/sbin
+# drwxr-xr-x   6 root    root    4.0K Apr 16 02:14 snap
+# drwxr-xr-x   2 root    root    4.0K Apr 16 02:10 srv
+# dr-xr-xr-x  13 root    root       0 Apr 21 09:23 sys
+# drwxrwxrwt  11 root    root    4.0K Apr 21 09:24 tmp
+# drwxr-xr-x  15 root    root    4.0K Apr 16 02:12 usr
+# drwxr-xr-x   1 vagrant vagrant   38 Apr 21 09:23 vagrant
+# drwxr-xr-x  14 root    root    4.0K Apr 21 08:34 var
+```
+
+Este `/srv` directorio está destinado a contener datos específicos del sitio que son atendidos por este sistema. Ahora `cd` en este directorio y clone el repositorio de código que viene con este libro:
+
+```sh
+cd /srv
+
+sudo git clone https://github.com/fhsinchy/nginx-handbook-projects.git
+```
+
+Dentro del `nginx-handbook-projects` directorio debería haber un directorio llamado `static-demo` que contenga cuatro archivos en total:
+
+```sh
+ls -lh /srv/nginx-handbook-projects/static-demo
+
+# -rw-r--r-- 1 root root 960 Apr 21 11:27 about.html
+# -rw-r--r-- 1 root root 960 Apr 21 11:27 index.html
+# -rw-r--r-- 1 root root 46K Apr 21 11:27 mini.min.css
+# -rw-r--r-- 1 root root 19K Apr 21 11:27 the-nginx-handbook.jpg
+```
+
+Ahora que tiene el contenido estático para servir, actualice su configuración de la siguiente manera:
+
+```sh
+events {
+
+}
+
+http {
+
+    server {
+
+        listen 80;
+        server_name nginx-handbook.test;
+
+        root /srv/nginx-handbook-projects/static-demo;
+    }
+
+}
+```
+
+El código es casi el mismo, excepto que la `return` directiva ahora ha sido reemplazada por una `root` directiva. Esta directiva se utiliza para declarar el directorio raíz de un sitio.
+
+Al escribir `root /srv/nginx-handbook-projects/static-demo` , le está diciendo a NGINX que busque archivos para servir dentro del `/srv/nginx-handbook-projects/static-demo` directorio si llega alguna solicitud a este servidor. Dado que NGINX es un servidor web, es lo suficientemente inteligente como para servir el `index.html` archivo de forma predeterminada.
+
+Veamos si esto funciona o no. Pruebe y vuelva a cargar el archivo de configuración actualizado y visite el servidor. Debería ser recibido con un sitio HTML algo roto:
+
+<div align="center"> 
+  <img src="https://www.freecodecamp.org/news/content/images/size/w1600/2021/04/image-91.png" alt="screenshot" />
+</div>
+
+Aunque NGINX ha servido correctamente el archivo index.html, a juzgar por el aspecto de los tres enlaces de navegación, parece que el código CSS no funciona.
+
+Puede pensar que hay algo mal en el archivo CSS. Pero en realidad, el problema está en el archivo de configuración.
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
 <!-- GETTING STARTED -->
 
 ## Getting Started
