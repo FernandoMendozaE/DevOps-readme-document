@@ -1342,11 +1342,11 @@ http {
         root /srv/nginx-handbook-projects/static-demo;
 
         location = /index_page {
-                return 307 /index.html;
+            return 307 /index.html;
         }
 
         location = /about_page {
-                return 307 /about.html;
+            return 307 /about.html;
         }
     }
 }
