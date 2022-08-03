@@ -1499,6 +1499,8 @@ Ahora, el problema de escribir una `try_files` directiva de esta manera es que n
   <img src="https://www.freecodecamp.org/news/content/images/2021/04/try-files.png" alt="screenshot" />
 </div>
 
+<br>
+
 Y es por eso `try_files` que a menudo se usa con la `$uri` variable NGINX.
 
 ```sh
@@ -1551,7 +1553,7 @@ curl -i http://nginx-handbook.test/nothing
 
 Una cosa que quizás ya haya notado es que si visita la raíz del servidor http://nginx-handbook.test, obtiene la respuesta 404.
 
-Esto se debe a que cuando accede a la raíz del servidor, la $urivariable no corresponde a ningún archivo existente, por lo que NGINX le proporciona la ubicación alternativa. Si desea solucionar este problema, actualice su configuración de la siguiente manera:
+Esto se debe a que cuando accede a la raíz del servidor, la `$uri` variable no corresponde a ningún archivo existente, por lo que NGINX le proporciona la ubicación alternativa. Si desea solucionar este problema, actualice su configuración de la siguiente manera:
 
 ```sh
 events {
