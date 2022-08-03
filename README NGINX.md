@@ -367,7 +367,6 @@ cat nginx.conf
 Intentar comprender este archivo en su estado actual será una pesadilla. Así que cambiemos el nombre del archivo y creemos uno nuevo vacío:
 
 ```sh
-# ingresar al archivo nginx
 cd /etc/nginx/
 
 # renames the file
@@ -532,6 +531,10 @@ Estos dos bloques de servidores son como dos personas que sostienen auriculares 
 Además de la `listen` directiva, también existe la `server_name` directiva. Considere el siguiente escenario de una aplicación de administración de biblioteca imaginaria:
 
 ```sh
+events {
+
+}
+
 http {
     server {
         listen 80;
