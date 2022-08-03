@@ -1536,6 +1536,8 @@ Entonces, si visita http://nginx-handbook.test/index.html, debería obtener la p
   <img src="https://www.freecodecamp.org/news/content/images/size/w1600/2021/04/image-95.png" alt="screenshot" />
 </div>
 
+<br>
+
 Pero si solicita un archivo que no existe, obtendrá la respuesta de la` /not_found` ubicación:
 
 ```sh
