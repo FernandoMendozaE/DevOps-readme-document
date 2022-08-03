@@ -1154,7 +1154,7 @@ http {
         listen 80;
         server_name nginx-handbook.test;
 
-		    location /Agatha8 {
+		location /Agatha8 {
         	return 200 "prefix matched.\n";
         }
 
