@@ -1235,31 +1235,123 @@ Esta vez, gana la coincidencia de prefijo. Entonces, la lista de todas las coinc
 
 </div>
 
-```sh
+<p align="right">(<a href="#top">volver arriba</a>)</p>
 
+### Variables en NGINX
+
+Las variables en NGINX son similares a las variables en otros lenguajes de programación. La `set` directiva se puede usar para declarar nuevas variables en cualquier lugar dentro del archivo de configuración:
+
+```sh
+set $<variable_name> <variable_value>;
+
+# set name "Farhan"
+# set age 25
+# set is_working true
 ```
 
-```sh
+Las variables pueden ser de tres tipos.
 
+- Cuerda
+- Entero
+- booleano
+
+Además de las variables que declara, existen variables integradas dentro de los módulos NGINX. Un índice alfabético de variables está disponible en la documentación oficial.
+
+Para ver algunas de las variables en acción, actualice la configuración de la siguiente manera:
+
+```sh
+events {
+
+}
+
+http {
+
+    server {
+
+        listen 80;
+        server_name nginx-handbook.test;
+
+        return 200 "Host - $host\nURI - $uri\nArgs - $args\n";
+    }
+
+}
 ```
 
-```sh
+Ahora, al enviar una solicitud al servidor, debe obtener una respuesta de la siguiente manera:
 
+```sh
+# curl http://nginx-handbook.test/user?name=Farhan
+
+# Host - nginx-handbook.test
+# URI - /user
+# Args - name=Farhan
 ```
 
-```sh
+Como puede ver, las variables `$host` y `$uri` contienen la dirección raíz y el URI solicitado en relación con la raíz, respectivamente. La `$args` variable, como puede ver, contiene todas las cadenas de consulta.
 
+En lugar de imprimir la forma de cadena literal de las cadenas de consulta, puede acceder a los valores individuales utilizando la `$arg` variable.
+
+```sh
+events {
+
+}
+
+http {
+
+    server {
+
+        listen 80;
+        server_name nginx-handbook.test;
+
+        set $name $arg_name; # $arg_<query string name>
+
+        return 200 "Name - $name\n";
+    }
+
+}
 ```
 
-```sh
-
-```
+Ahora la respuesta del servidor debería verse así:
 
 ```sh
+curl http://nginx-handbook.test?name=Farhan
 
+# Name - Farhan
 ```
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
 
 <!-- GETTING STARTED -->
 
