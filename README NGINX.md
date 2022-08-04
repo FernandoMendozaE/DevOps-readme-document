@@ -2711,7 +2711,7 @@ sudo mv /etc/nginx/nginx.conf.backup /etc/nginx/nginx.conf
 sudo nginx -s reload
 ```
 
-Ahora NGINX debería volver a su estado original. Echemos un vistazo al contenido de este archivo una vez más ejecutando el sudo cat /etc/nginx/nginx.confarchivo:
+Ahora NGINX debería volver a su estado original. Echemos un vistazo al contenido de este archivo una vez más ejecutando el `sudo cat /etc/nginx/nginx.conf` archivo:
 
 ```sh
 user www-data;
