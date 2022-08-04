@@ -1973,6 +1973,341 @@ Dependiendo de los encabezados requeridos por su aplicación, es posible que deb
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
+### PHP con NGINX
+
+PHP y NGINX van juntos como el pan y la mantequilla. Después de todo, la E y la P en la pila LEMP representan NGINX y PHP.
+
+Ya he incluido una aplicación PHP de demostración en el repositorio que viene con este artículo. Si ya lo ha clonado en el `/srv/nginx-handbook-projects` directorio, entonces la aplicación debería estar dentro de `/srv/nginx-handbook-projects/php-demo` .
+
+Para que esta demostración funcione, deberá instalar un paquete llamado PHP-FPM. Para instalar el paquete, puede ejecutar el siguiente comando:
+
+```sh
+sudo apt install php-fpm -y
+```
+
+Para probar la aplicación, inicie un servidor PHP ejecutando el siguiente comando dentro del `/srv/nginx-handbook-projects/php-demo` directorio:
+
+```sh
+php -S localhost:8000
+
+# [Sat Apr 24 16:17:36 2021] PHP 7.4.3 Development Server (http://localhost:8000) started
+```
+
+La aplicación debe ejecutarse en el puerto 8000, pero no se puede acceder a ella desde el exterior del servidor. Para verificar, envíe una solicitud de obtención a http://localhost:8000 desde dentro de su servidor:
+
+```sh
+curl -I localhost:8000
+
+# HTTP/1.1 200 OK
+# Host: localhost:8000
+# Date: Sat, 24 Apr 2021 16:22:42 GMT
+# Connection: close
+# X-Powered-By: PHP/7.4.3
+# Content-type: application/json
+
+# {"status":"success","message":"You're reading The NGINX Handbook!"}
+```
+
+Si obtiene una respuesta de 200, entonces el servidor está funcionando bien. Al igual que la configuración de Node.js, ahora puede simplemente `proxy_pass` enviar solicitudes a localhost: 8000, pero con PHP, hay una mejor manera.
+
+La parte `FPM` en `PHP-FPM` **significa Módulo de proceso FastCGI. FastCGI es un protocolo como HTTP para intercambiar datos binarios**. Este protocolo es un poco más rápido que HTTP y brinda mayor seguridad.
+
+Para usar FastCGI en lugar de HTTP, actualice su configuración de la siguiente manera:
+
+```sh
+events {
+
+}
+
+http {
+
+      include /etc/nginx/mime.types;
+
+      server {
+
+          listen 80;
+          server_name nginx-handbook.test;
+          root /srv/nginx-handbook-projects/php-demo;
+
+          index index.php;
+
+          location / {
+              try_files $uri $uri/ =404;
+          }
+
+          location ~ \.php$ {
+              fastcgi_pass unix:/var/run/php/php7.4-fpm.sock;
+              fastcgi_param REQUEST_METHOD $request_method;
+              fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+      }
+   }
+}
+```
+
+Comencemos con la nueva `index` directiva. Como sabe, NGINX por defecto busca un archivo index.html para servir. Pero en el proyecto de demostración, se llama index.php. Entonces, al escribir `index index.php` , le está indicando a NGINX que use el archivo index.php como root en su lugar.
+
+Esta directiva puede aceptar múltiples parámetros. Si escribe algo como `index index.php index.html` , NGINX primero buscará index.php. Si no encuentra ese archivo, buscará un archivo index.html.
+
+La `try_files` directiva dentro del primer `location` contexto es la misma que ha visto en una sección anterior. El `=404` al final indica el error a lanzar si no se encuentra ninguno de los archivos.
+
+El segundo `location` bloque es el lugar donde ocurre la magia principal. Como puede ver, hemos reemplazado la `proxy_pass` directiva por una nueva `fastcgi_pass` . Como sugiere el nombre, se utiliza para pasar una solicitud a un servicio FastCGI.
+
+El servicio `PHP-FPM` por defecto se ejecuta en el puerto 9000 del host. Entonces, en lugar de usar un socket de Unix como lo hice aquí, puede pasar la solicitud` http://localhost:9000` directamente. Pero usar un socket Unix es más seguro.
+
+Si tiene varias versiones de PHP-FPM instaladas, simplemente puede enumerar todas las ubicaciones de los archivos de socket ejecutando el siguiente comando
+
+```sh
+sudo find / -name *fpm.sock
+
+# /run/php/php7.4-fpm.sock
+# /run/php/php-fpm.sock
+# /etc/alternatives/php-fpm.sock
+# /var/lib/dpkg/alternatives/php-fpm.sock
+```
+
+El `/run/php/php-fpm.sock` archivo hace referencia a la última versión de PHP-FPM instalada en su sistema. ?_Prefiero usar el que tiene el número de versión_. De esta manera, incluso si PHP-FPM se actualiza, estaré seguro de la versión que estoy usando.
+
+A diferencia de pasar solicitudes a través de HTTP, pasar solicitudes a través de FPM requiere que pasemos información adicional.
+
+La forma general de pasar información extra al servicio FPM es usando la `fastcgi_param` directiva. Como mínimo, deberá pasar el método de solicitud y el nombre del script al servicio de back-end para que funcione el proxy.
+
+El `fastcgi_param REQUEST_METHOD $request_method;` pasa el método de solicitud al back-end y la f`astcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;` línea pasa la ubicación exacta del script PHP para ejecutar.
+
+En este estado, su configuración debería funcionar. Para probarlo, visite su servidor y debería recibir algo como esto:
+
+<div align="center"> 
+  <img src="https://www.freecodecamp.org/news/content/images/size/w1600/2021/04/500-on-fastcgi.png" width="800"/>
+</div>
+
+Bueno, eso es raro. Un error 502 significa que NGINX se ha bloqueado por algún motivo. Aquí es donde los registros de errores pueden resultar útiles. Echemos un vistazo a la última entrada en el archivo error.log:
+
+```sh
+tail -n 1 /var/log/nginx/error.log
+
+# 2021/04/24 17:15:17 [crit] 17691#17691: *21 connect() to unix:/var/run/php/php7.4-fpm.sock failed (13: Permission denied) while connecting to upstream, client: 192.168.20.20, server: nginx-handbook.test, request: "GET / HTTP/1.1", upstream: "fastcgi://unix:/var/run/php/php7.4-fpm.sock:", host: "nginx-handbook.test"
+```
+
+Parece que al proceso NGINX se le niega el permiso para acceder al proceso PHP-FPM.
+
+Una de las principales razones para obtener un error de permiso denegado es la falta de coincidencia del usuario. Eche un vistazo al usuario que posee el proceso de trabajo de NGINX.
+
+```sh
+ps aux | grep nginx
+
+# root         677  0.0  0.4   8892  4260 ?        Ss   14:31   0:00 nginx: master process /usr/sbin/nginx -g daemon on; master_process on;
+# nobody     17691  0.0  0.3   9328  3452 ?        S    17:09   0:00 nginx: worker process
+# vagrant    18224  0.0  0.2   8160  2552 pts/0    S+   17:19   0:00 grep --color=auto nginx
+```
+
+Como puede ver, el proceso actualmente es propiedad de nobody. Ahora inspeccione el proceso PHP-FPM.
+
+```sh
+ps aux | grep php
+
+# root       14354  0.0  1.8 195484 18924 ?        Ss   16:11   0:00 php-fpm: master process (/etc/php/7.4/fpm/php-fpm.conf)
+# www-data   14355  0.0  0.6 195872  6612 ?        S    16:11   0:00 php-fpm: pool www
+# www-data   14356  0.0  0.6 195872  6612 ?        S    16:11   0:00 php-fpm: pool www
+# vagrant    18296  0.0  0.0   8160   664 pts/0    S+   17:20   0:00 grep --color=auto php
+```
+
+Este proceso, por otro lado, es propiedad del `www-data` usuario. Es por eso que a NGINX se le niega el acceso a este proceso.
+
+Para resolver este problema, actualice su configuración de la siguiente manera:
+
+```sh
+user www-data;
+
+events {
+
+}
+
+http {
+
+      include /etc/nginx/mime.types;
+
+      server {
+
+          listen 80;
+          server_name nginx-handbook.test;
+          root /srv/nginx-handbook-projects/php-demo;
+
+          index index.php;
+
+          location / {
+              try_files $uri $uri/ =404;
+          }
+
+          location ~ \.php$ {
+              fastcgi_pass unix:/var/run/php/php7.4-fpm.sock;
+              fastcgi_param REQUEST_METHOD $request_method;
+              fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+      }
+   }
+}
+```
+
+La `user` directiva es responsable de establecer el propietario de los procesos de trabajo de NGINX. Ahora inspeccione el proceso NGINX una vez más:
+
+```sh
+ps aux | grep nginx
+
+# root         677  0.0  0.4   8892  4264 ?        Ss   14:31   0:00 nginx: master process /usr/sbin/nginx -g daemon on; master_process on;
+# www-data   20892  0.0  0.3   9292  3504 ?        S    18:10   0:00 nginx: worker process
+# vagrant    21294  0.0  0.2   8160  2568 pts/0    S+   18:18   0:00 grep --color=auto nginx
+```
+
+Sin duda, el proceso ahora es propiedad del `www-data` usuario. Envía una solicitud a tu servidor para comprobar si funciona o no:
+
+```sh
+curl -i http://nginx-handbook.test
+
+# HTTP/1.1 200 OK
+# Server: nginx/1.18.0 (Ubuntu)
+# Date: Sat, 24 Apr 2021 18:22:24 GMT
+# Content-Type: application/json
+# Transfer-Encoding: chunked
+# Connection: keep-alive
+
+# {"status":"success","message":"You're reading The NGINX Handbook!"}
+```
+
+Si obtiene un código de estado 200 con una carga JSON, está listo para comenzar.
+
+Esta configuración simple está bien para la aplicación de demostración, pero en proyectos de la vida real tendrá que pasar algunos parámetros adicionales.
+
+Por esta razón, NGINX incluye una configuración parcial llamada `fastcgi_params` . Este archivo contiene una lista de los parámetros FastCGI más comunes.
+
+```sh
+cat /etc/nginx/fastcgi_params
+
+# fastcgi_param  QUERY_STRING       $query_string;
+# fastcgi_param  REQUEST_METHOD     $request_method;
+# fastcgi_param  CONTENT_TYPE       $content_type;
+# fastcgi_param  CONTENT_LENGTH     $content_length;
+
+# fastcgi_param  SCRIPT_NAME        $fastcgi_script_name;
+# fastcgi_param  REQUEST_URI        $request_uri;
+# fastcgi_param  DOCUMENT_URI       $document_uri;
+# fastcgi_param  DOCUMENT_ROOT      $document_root;
+# fastcgi_param  SERVER_PROTOCOL    $server_protocol;
+# fastcgi_param  REQUEST_SCHEME     $scheme;
+# fastcgi_param  HTTPS              $https if_not_empty;
+
+# fastcgi_param  GATEWAY_INTERFACE  CGI/1.1;
+# fastcgi_param  SERVER_SOFTWARE    nginx/$nginx_version;
+
+# fastcgi_param  REMOTE_ADDR        $remote_addr;
+# fastcgi_param  REMOTE_PORT        $remote_port;
+# fastcgi_param  SERVER_ADDR        $server_addr;
+# fastcgi_param  SERVER_PORT        $server_port;
+# fastcgi_param  SERVER_NAME        $server_name;
+
+# PHP only, required if PHP was built with --enable-force-cgi-redirect
+# fastcgi_param  REDIRECT_STATUS    200;
+```
+
+Como puede ver, este archivo también contiene el `REQUEST_METHOD` parámetro. En lugar de pasar eso manualmente, simplemente puede incluir este archivo en su configuración:
+
+```sh
+user www-data;
+
+events {
+
+}
+
+http {
+
+      include /etc/nginx/mime.types;
+
+      server {
+
+          listen 80;
+          server_name nginx-handbook.test;
+          root /srv/nginx-handbook-projects/php-demo;
+
+          index index.php;
+
+          location / {
+              try_files $uri $uri/ =404;
+          }
+
+          location ~ \.php$ {
+              fastcgi_pass unix:/var/run/php/php7.4-fpm.sock;
+              fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+              include /etc/nginx/fastcgi_params;
+      }
+   }
+}
+```
+
+Su servidor debería comportarse de la misma manera. Además del `fastcgi_params` archivo, también puede encontrar el `fastcgi.conf` archivo que contiene un conjunto de parámetros ligeramente diferente. Le sugiero que evite eso debido a algunas inconsistencias con su comportamiento.
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
 ```sh
 
 ```
@@ -1990,6 +2325,7 @@ Dependiendo de los encabezados requeridos por su aplicación, es posible que deb
 ```
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
+
 <!-- GETTING STARTED -->
 
 ## Getting Started
