@@ -2075,9 +2075,11 @@ El `fastcgi_param REQUEST_METHOD $request_method;` pasa el método de solicitud 
 
 En este estado, su configuración debería funcionar. Para probarlo, visite su servidor y debería recibir algo como esto:
 
+<br>
 <div align="center"> 
   <img src="https://www.freecodecamp.org/news/content/images/size/w1600/2021/04/500-on-fastcgi.png" width="800"/>
 </div>
+<br>
 
 Bueno, eso es raro. Un error 502 significa que NGINX se ha bloqueado por algún motivo. Aquí es donde los registros de errores pueden resultar útiles. Echemos un vistazo a la última entrada en el archivo error.log:
 
