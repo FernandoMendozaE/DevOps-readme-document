@@ -1838,7 +1838,7 @@ http {
         server_name nginx.test;
 
         location / {
-            proxy_pass "https://nginx.org/";
+            proxy_pass "http://nginx.org/";
         }
     }
 }
@@ -1850,7 +1850,7 @@ Además de validar y volver a cargar la configuración, también deberá agregar
 192.168.20.20   nginx.test
 ```
 
-Ahora, si visita http://nginx.test, será recibido por el sitio original https://nginx.org mientras que el URI permanece sin cambios.
+Ahora, si visita http://nginx.test, será recibido por el sitio original http://nginx.org mientras que el URI permanece sin cambios.
 
 <div align="center"> 
   <img src="https://www.freecodecamp.org/news/content/images/size/w1600/2021/04/nginx-org-proxy.png" alt="screenshot" />
@@ -1859,6 +1859,8 @@ Ahora, si visita http://nginx.test, será recibido por el sitio original https:/
 Incluso debería poder navegar por el sitio hasta cierto punto. Si visita http://nginx.test/en/docs/, debería obtener la página http://nginx.org/en/docs/ como respuesta.
 
 Entonces, como puede ver, en un nivel básico, la `proxy_pass` directiva simplemente pasa la solicitud de un cliente a un servidor de terceros y revierte la respuesta al cliente.
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
 
 ```sh
 
