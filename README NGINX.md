@@ -2801,9 +2801,9 @@ http {
 #}
 ```
 
-Ahora debería poder entender este archivo sin muchos problemas. En el contexto principal `user www-data;` , las `worker_processes auto; `líneas deben ser fácilmente reconocibles para usted.
+Ahora debería poder entender este archivo sin muchos problemas. En el contexto principal `user www-data;` , las `worker_processes auto;` líneas deben ser fácilmente reconocibles para usted.
 
-La línea `pid /run/nginx.pid; `establece el ID de proceso para el proceso NGINX e `include /etc/nginx/modules-enabled/\*.conf;` incluye cualquier archivo de configuración que se encuentre en el `/etc/nginx/modules-enabled/` directorio.
+La línea `pid /run/nginx.pid;` establece el ID de proceso para el proceso NGINX e `include /etc/nginx/modules-enabled/\*.conf;` incluye cualquier archivo de configuración que se encuentre en el `/etc/nginx/modules-enabled/` directorio.
 
 Este directorio está destinado a módulos dinámicos NGINX. No he cubierto los módulos dinámicos en este artículo, así que lo omitiré.
 
@@ -2839,7 +2839,7 @@ Hay otro directorio `/etc/nginx/sites-available/` destinado a almacenar archivos
 De hecho, hay una configuración de ejemplo:
 
 ```sh
-ln -lh /etc/nginx/sites-enabled/
+ls -lh /etc/nginx/sites-enabled/
 
 # lrwxrwxrwx 1 root root 34 Apr 25 08:33 default -> /etc/nginx/sites-available/default
 ```
@@ -2855,7 +2855,7 @@ sudo rm /etc/nginx/sites-enabled/default
 
 ls -lh /etc/nginx/sites-enabled/
 
-# lrwxrwxrwx 1 root root 41 Apr 25 18:01 nginx-handbook -> /etc/nginx/sites-available/nginx-handbook
+# total 0
 ```
 
 Cree un nuevo archivo ejecutando `sudo touch /etc/nginx/sites-available/nginx-handbook` y coloque el siguiente contenido allí:
@@ -2869,7 +2869,7 @@ server {
 }
 ```
 
-Los archivos dentro del `/etc/nginx/sites-available/` directorio deben incluirse dentro del `http` contexto principal, por lo que solo deben contener serverbloques.
+Los archivos dentro del `/etc/nginx/sites-available/` directorio deben incluirse dentro del `http` contexto principal, por lo que solo deben contener `server` bloques.
 
 Ahora cree un enlace simbólico a este archivo dentro del `/etc/nginx/sites-enabled/` directorio ejecutando el siguiente comando:
 
@@ -2882,7 +2882,7 @@ ls -lh /etc/nginx/sites-enabled/
 # lrwxrwxrwx 1 root root 41 Apr 25 18:01 nginx-handbook -> /etc/nginx/sites-available/nginx-handbook
 ```
 
-Antes de validar y volver a cargar el archivo de configuración, deberá volver a abrir los archivos de registro. De lo contrario, puede obtener un error de permiso denegado. Esto sucede porque la ID del proceso es diferente esta vez como resultado del intercambio del nginx.confarchivo anterior.
+Antes de validar y volver a cargar el archivo de configuración, deberá volver a abrir los archivos de registro. De lo contrario, puede obtener un error de permiso denegado. Esto sucede porque la ID del proceso es diferente esta vez como resultado del intercambio del `nginx.conf` archivo anterior.
 
 ```sh
 sudo rm /var/log/nginx/*.log
@@ -2909,7 +2909,7 @@ Visite el servidor (http://nginx-handbook.test/) y debería ser recibido con la 
   <img src="https://www.freecodecamp.org/news/content/images/size/w1600/2021/04/image-100.png" alt="screenshot" />
 </div>
 
-Si configuró el servidor correctamente y aún recibe la página de bienvenida de NGINX anterior, realice una actualización completa. El navegador a menudo conserva activos antiguos y requiere un poco de limpieza.
+Si configuró el servidor correctamente y aún recibe la página de bienvenida de NGINX anterior, realice una actualización completa. El navegador a menudo conserva cambios antiguos y requiere un poco de limpieza.
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
