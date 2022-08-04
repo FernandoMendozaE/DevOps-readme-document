@@ -77,6 +77,7 @@
         <li><a href="#cómo-comprimir-respuestas">Cómo comprimir respuestas</a></li>
       </ul>
     </li>
+    <li><a href="#cómo-entender-el-archivo-de-configuración-principal">Cómo entender el archivo de configuración principal</a></li>
     <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
@@ -2694,41 +2695,223 @@ La versión sin comprimir del archivo es `46K` y la versión comprimida es `9.1K
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
-```sh
+### Cómo entender el archivo de configuración principal
 
-```
+Espero que recuerde el `nginx.conf` archivo original que cambió de nombre en una sección anterior. De acuerdo con el wiki de Debian , este archivo debe ser modificado por los mantenedores de NGINX y no por los administradores del servidor, a menos que sepan exactamente lo que están haciendo.
 
-```sh
+Pero a lo largo de todo el artículo, les he enseñado a configurar sus servidores en este mismo archivo. En esta sección, sin embargo, le mostraré cómo debe configurar sus servidores sin cambiar el `nginx.conf` archivo.
 
-```
-
-```sh
-
-```
+Para empezar, primero elimine o cambie el nombre de su `nginx.conf` archivo modificado y recupere el original:
 
 ```sh
+sudo rm /etc/nginx/nginx.conf
 
+sudo mv /etc/nginx/nginx.conf.backup /etc/nginx/nginx.conf
+
+sudo nginx -s reload
 ```
+
+Ahora NGINX debería volver a su estado original. Echemos un vistazo al contenido de este archivo una vez más ejecutando el sudo cat /etc/nginx/nginx.confarchivo:
 
 ```sh
+user www-data;
+worker_processes auto;
+pid /run/nginx.pid;
+include /etc/nginx/modules-enabled/*.conf;
 
+events {
+	worker_connections 768;
+	# multi_accept on;
+}
+
+http {
+
+	##
+	# Basic Settings
+	##
+
+	sendfile on;
+	tcp_nopush on;
+	tcp_nodelay on;
+	keepalive_timeout 65;
+	types_hash_max_size 2048;
+	# server_tokens off;
+
+	# server_names_hash_bucket_size 64;
+	# server_name_in_redirect off;
+
+	include /etc/nginx/mime.types;
+	default_type application/octet-stream;
+
+	##
+	# SSL Settings
+	##
+
+	ssl_protocols TLSv1 TLSv1.1 TLSv1.2 TLSv1.3; # Dropping SSLv3, ref: POODLE
+	ssl_prefer_server_ciphers on;
+
+	##
+	# Logging Settings
+	##
+
+	access_log /var/log/nginx/access.log;
+	error_log /var/log/nginx/error.log;
+
+	##
+	# Gzip Settings
+	##
+
+	gzip on;
+
+	# gzip_vary on;
+	# gzip_proxied any;
+	# gzip_comp_level 6;
+	# gzip_buffers 16 8k;
+	# gzip_http_version 1.1;
+	# gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+
+	##
+	# Virtual Host Configs
+	##
+
+	include /etc/nginx/conf.d/*.conf;
+	include /etc/nginx/sites-enabled/*;
+}
+
+
+#mail {
+#	# See sample authentication script at:
+#	# http://wiki.nginx.org/ImapAuthenticateWithApachePhpScript
+#
+#	# auth_http localhost/auth.php;
+#	# pop3_capabilities "TOP" "USER";
+#	# imap_capabilities "IMAP4rev1" "UIDPLUS";
+#
+#	server {
+#		listen     localhost:110;
+#		protocol   pop3;
+#		proxy      on;
+#	}
+#
+#	server {
+#		listen     localhost:143;
+#		protocol   imap;
+#		proxy      on;
+#	}
+#}
 ```
+
+Ahora debería poder entender este archivo sin muchos problemas. En el contexto principal `user www-data;` , las `worker_processes auto; `líneas deben ser fácilmente reconocibles para usted.
+
+La línea `pid /run/nginx.pid; `establece el ID de proceso para el proceso NGINX e `include /etc/nginx/modules-enabled/\*.conf;` incluye cualquier archivo de configuración que se encuentre en el `/etc/nginx/modules-enabled/` directorio.
+
+Este directorio está destinado a módulos dinámicos NGINX. No he cubierto los módulos dinámicos en este artículo, así que lo omitiré.
+
+Ahora dentro del `http` contexto, en la configuración básica, puede ver algunas técnicas de optimización comunes aplicadas. Esto es lo que hacen estas técnicas:
+
+- `sendfile on;` deshabilita el almacenamiento en búfer para archivos estáticos.
+- `tcp_nopush on;` permite enviar el encabezado de respuesta en un paquete.
+- `tcp_nodelay on;` deshabilita el algoritmo de Nagle, lo que resulta en una entrega de archivos estáticos más rápida.
+
+La `keepalive_timeout` directiva indica cuánto tiempo mantener abierta una conexión y la `types_hash_maxsize` directiva establece el tamaño del mapa hash de tipos. También incluye el `mime.types` archivo por defecto.
+
+Omitiré la configuración de SSL simplemente porque no la hemos cubierto en este artículo. Ya hemos discutido la configuración de registro y gzip. Puede ver algunas de las directivas con respecto a gzip como se comenta. Siempre que comprenda lo que está haciendo, puede personalizar esta configuración.
+
+Utiliza el `mail` contexto para configurar NGINX como un servidor de correo. Hasta ahora solo hemos hablado de NGINX como un servidor web, así que también lo omitiré.
+
+Ahora, en la configuración de hosts virtuales, debería ver dos líneas de la siguiente manera:
 
 ```sh
+##
+# Virtual Host Configs
+##
 
+include /etc/nginx/conf.d/*.conf;
+include /etc/nginx/sites-enabled/*;
 ```
+
+Estas dos líneas indican a NGINX que incluya cualquier archivo de configuración que se encuentre dentro de los directorios `/etc/nginx/conf.d/` y `/etc/nginx/sites-enabled/`.
+
+Después de ver estas dos líneas, la gente suele tomar estos dos directorios como el lugar ideal para colocar sus archivos de configuración, pero eso no es correcto.
+
+Hay otro directorio `/etc/nginx/sites-available/` destinado a almacenar archivos de configuración para sus hosts virtuales. El `/etc/nginx/sites-enabled/` directorio está destinado a almacenar los enlaces simbólicos a los archivos del `/etc/nginx/sites-available/directorio`.
+
+De hecho, hay una configuración de ejemplo:
 
 ```sh
+ln -lh /etc/nginx/sites-enabled/
 
+# lrwxrwxrwx 1 root root 34 Apr 25 08:33 default -> /etc/nginx/sites-available/default
 ```
+
+Como puede ver, el directorio contiene un enlace simbólico al `/etc/nginx/sites-available/default` archivo.
+
+La idea es escribir varios hosts virtuales dentro del `/etc/nginx/sites-available/` directorio y activar algunos de ellos al vincularlos simbólicamente al `/etc/nginx/sites-enabled/` directorio.
+
+Para demostrar este concepto, configuremos un servidor estático simple. Primero, elimine el enlace simbólico predeterminado del host virtual, desactivando esta configuración en el proceso:
 
 ```sh
+sudo rm /etc/nginx/sites-enabled/default
 
+ls -lh /etc/nginx/sites-enabled/
+
+# lrwxrwxrwx 1 root root 41 Apr 25 18:01 nginx-handbook -> /etc/nginx/sites-available/nginx-handbook
 ```
+
+Cree un nuevo archivo ejecutando `sudo touch /etc/nginx/sites-available/nginx-handbook` y coloque el siguiente contenido allí:
 
 ```sh
+server {
+    listen 80;
+    server_name nginx-handbook.test;
 
+    root /srv/nginx-handbook-projects/static-demo;
+}
 ```
+
+Los archivos dentro del `/etc/nginx/sites-available/` directorio deben incluirse dentro del `http` contexto principal, por lo que solo deben contener serverbloques.
+
+Ahora cree un enlace simbólico a este archivo dentro del `/etc/nginx/sites-enabled/` directorio ejecutando el siguiente comando:
+
+```sh
+sudo ln -s /etc/nginx/sites-available/nginx-handbook /etc/nginx/sites-enabled/nginx-handbook
+
+ls -lh /etc/nginx/sites-enabled/
+
+# lrwxrwxrwx 1 root root 34 Apr 25 08:33 default -> /etc/nginx/sites-available/default
+# lrwxrwxrwx 1 root root 41 Apr 25 18:01 nginx-handbook -> /etc/nginx/sites-available/nginx-handbook
+```
+
+Antes de validar y volver a cargar el archivo de configuración, deberá volver a abrir los archivos de registro. De lo contrario, puede obtener un error de permiso denegado. Esto sucede porque la ID del proceso es diferente esta vez como resultado del intercambio del nginx.confarchivo anterior.
+
+```sh
+sudo rm /var/log/nginx/*.log
+
+sudo touch /var/log/nginx/access.log /var/log/nginx/error.log
+
+sudo nginx -s reopen
+```
+
+Finalmente, valide y vuelva a cargar el archivo de configuración:
+
+```sh
+sudo nginx -t
+
+# nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+# nginx: configuration file /etc/nginx/nginx.conf test is successful
+
+sudo nginx -s reload
+```
+
+Visite el servidor (http://nginx-handbook.test/) y debería ser recibido con la buena y antigua página del manual de NGINX:
+
+<div align="center"> 
+  <img src="https://www.freecodecamp.org/news/content/images/size/w1600/2021/04/image-100.png" alt="screenshot" />
+</div>
+
+Si configuró el servidor correctamente y aún recibe la página de bienvenida de NGINX anterior, realice una actualización completa. El navegador a menudo conserva activos antiguos y requiere un poco de limpieza.
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>s
 
 ```sh
 
