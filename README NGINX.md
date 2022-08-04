@@ -2911,7 +2911,7 @@ Visite el servidor (http://nginx-handbook.test/) y debería ser recibido con la 
 
 Si configuró el servidor correctamente y aún recibe la página de bienvenida de NGINX anterior, realice una actualización completa. El navegador a menudo conserva activos antiguos y requiere un poco de limpieza.
 
-<p align="right">(<a href="#top">volver arriba</a>)</p>s
+<p align="right">(<a href="#top">volver arriba</a>)</p>
 
 ```sh
 
