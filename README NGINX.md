@@ -64,7 +64,7 @@
     <li>
       <a href="#cómo-usar-nginx-como-proxy-inverso">Cómo usar NGINX como proxy inverso</a>
       <ul>
-        <li><a href="#node.js-con-nginx">Node.js con NGINX</a></li>
+        <li><a href="#node-con-nginx">Node con NGINX</a></li>
         <li><a href="#php-con-nginx">PHP con NGINX</a></li>
       </ul>
     </li>
@@ -1862,7 +1862,7 @@ Entonces, como puede ver, en un nivel básico, la `proxy_pass` directiva simplem
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
-### Node.js con NGINX
+### Node con NGINX
 
 Ahora que sabe cómo configurar un servidor proxy inverso básico, puede servir una aplicación Node.js con proxy inverso mediante NGINX. He agregado una aplicación de demostración dentro del repositorio que viene con este artículo.
 
