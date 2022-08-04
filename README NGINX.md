@@ -2308,7 +2308,7 @@ http {
 }
 ```
 
-La configuración dentro del `server` contexto es la misma que ya has visto. El upstreamcontexto, sin embargo, es nuevo. Un upstream en NGINX es una colección de servidores que se pueden tratar como un solo backend.
+La configuración dentro del `server` contexto es la misma que ya has visto. El `upstream` contexto, sin embargo, es nuevo. Un upstream en NGINX es una colección de servidores que se pueden tratar como un solo backend.
 
 Entonces, los tres servidores que comenzó a usar PM2 se pueden colocar dentro de un solo flujo ascendente y puede dejar que NGINX equilibre la carga entre ellos.
 
