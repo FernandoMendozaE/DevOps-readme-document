@@ -2620,6 +2620,7 @@ http {
             expires 1M;
         }
     }
+}
 ```
 
 Si aún no está familiarizado con él, GZIP es un formato de archivo popular utilizado por las aplicaciones para la compresión y descompresión de archivos. NGINX puede utilizar este formato para comprimir respuestas usando las `gzip` directivas.
