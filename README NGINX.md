@@ -68,6 +68,7 @@
         <li><a href="#php-con-nginx">PHP con NGINX</a></li>
       </ul>
     </li>
+    <li><a href="#cómo-utilizar-nginx-como-equilibrador-de-carga">Cómo utilizar NGINX como equilibrador de carga</a></li>
     <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
@@ -1908,7 +1909,9 @@ events {
 }
 
 http {
+
     server {
+
         listen 80;
         server_name nginx-handbook.test;
 
@@ -1944,7 +1947,9 @@ events {
 }
 
 http {
+
     server {
+
         listen 80;
             server_name nginx-handbook.test;
 
@@ -2246,17 +2251,87 @@ Su servidor debería comportarse de la misma manera. Además del `fastcgi_params
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
-```sh
+### Cómo utilizar NGINX como equilibrador de carga
 
+Gracias al diseño de proxy inverso de NGINX, puede configurarlo fácilmente como balanceador de carga.
+
+Ya he agregado una demostración al repositorio que viene con este artículo. Si ya ha clonado el repositorio dentro del /`srv/nginx-handbook-projects/` directorio, la demostración debería estar en el `/srv/nginx-handbook-projects/load-balancer-demo/` directorio.
+
+En un escenario de la vida real, el equilibrio de carga puede ser necesario en proyectos a gran escala distribuidos en varios servidores. Pero para esta demostración simple, he creado tres servidores Node.js muy simples que responden con un número de servidor y un código de estado 200.
+
+Ejecute los siguientes comandos para iniciar los tres servidores Node.js:
+
+```sh
+pm2 start /srv/nginx-handbook-projects/load-balancer-demo/server-1.js
+
+pm2 start /srv/nginx-handbook-projects/load-balancer-demo/server-2.js
+
+pm2 start /srv/nginx-handbook-projects/load-balancer-demo/server-3.js
+
+pm2 list
+
+# ┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+# │ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+# ├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+# │ 0  │ server-1           │ fork     │ 0    │ online    │ 0%       │ 37.4mb   │
+# │ 1  │ server-2           │ fork     │ 0    │ online    │ 0%       │ 37.2mb   │
+# │ 2  │ server-3           │ fork     │ 0    │ online    │ 0%       │ 37.1mb   │
+# └────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
 ```
 
-```sh
+Deben ejecutarse tres servidores Node.js en localhost:3001, localhost:3002, localhost:3003 respectivamente.
 
+Ahora actualice su configuración de la siguiente manera:
+
+```sh
+events {
+
+}
+
+http {
+
+    upstream backend_servers {
+        server localhost:3001;
+        server localhost:3002;
+        server localhost:3003;
+    }
+
+    server {
+
+        listen 80;
+        server_name nginx-handbook.test;
+
+        location / {
+            proxy_pass http://backend_servers;
+        }
+    }
+}
 ```
 
-```sh
+La configuración dentro del `server` contexto es la misma que ya has visto. El upstreamcontexto, sin embargo, es nuevo. Un upstream en NGINX es una colección de servidores que se pueden tratar como un solo backend.
 
+Entonces, los tres servidores que comenzó a usar PM2 se pueden colocar dentro de un solo flujo ascendente y puede dejar que NGINX equilibre la carga entre ellos.
+
+Para probar la configuración, deberá enviar una serie de solicitudes al servidor. Puede automatizar el proceso usando un `while` bucle en bash:
+
+```sh
+while sleep 0.5; do curl http://nginx-handbook.test; done
+
+# response from server - 2.
+# response from server - 3.
+# response from server - 1.
+# response from server - 2.
+# response from server - 3.
+# response from server - 1.
+# response from server - 2.
+# response from server - 3.
+# response from server - 1.
+# response from server - 2.
 ```
+
+Puede cancelar el bucle pulsando `Ctrl + C` en su teclado. Como puede ver en las respuestas del servidor, NGINX equilibra la carga de los servidores automáticamente.
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
 
 ```sh
 
