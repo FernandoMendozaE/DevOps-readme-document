@@ -61,6 +61,13 @@
       </ul>
     </li>
     <li><a href="#iniciar-sesión-en-nginx">Iniciar sesión en NGINX</a></li>
+    <li>
+      <a href="#cómo-usar-nginx-como-proxy-inverso">Cómo usar NGINX como proxy inverso</a>
+      <ul>
+        <li><a href="#node.js-con-nginx">Node.js con NGINX</a></li>
+        <li><a href="#php-con-nginx">PHP con NGINX</a></li>
+      </ul>
+    </li>
     <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
@@ -1807,13 +1814,51 @@ Para la mayoría de los proyectos, dejar la configuración de error como está d
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
-```sh
+### Cómo usar NGINX como proxy inverso
 
+Cuando se configura como un proxy inverso, NGINX se ubica entre el cliente y un servidor back-end. El cliente envía solicitudes a NGINX, luego NGINX pasa la solicitud al back-end.
+
+Una vez que el servidor back-end termina de procesar la solicitud, la envía de vuelta a NGINX. A su vez, NGINX devuelve la respuesta al cliente.
+
+Durante todo el proceso, el cliente no tiene idea de quién está procesando realmente la solicitud. Suena complicado por escrito, pero una vez que lo haga usted mismo, verá lo fácil que lo hace NGINX.
+
+Veamos un ejemplo muy básico y poco práctico de proxy inverso:
+
+```sh
+events {
+
+}
+
+http {
+
+    include /etc/nginx/mime.types;
+
+    server {
+        listen 80;
+        server_name nginx.test;
+
+        location / {
+            proxy_pass "https://nginx.org/";
+        }
+    }
+}
 ```
 
-```sh
+Además de validar y volver a cargar la configuración, también deberá agregar esta dirección a su `hosts` archivo para que esta demostración funcione en su sistema:
 
+```sh
+192.168.20.20   nginx.test
 ```
+
+Ahora, si visita http://nginx.test, será recibido por el sitio original https://nginx.org mientras que el URI permanece sin cambios.
+
+<div align="center"> 
+  <img src="https://www.freecodecamp.org/news/content/images/size/w1600/2021/04/nginx-org-proxy.png" alt="screenshot" />
+</div>
+
+Incluso debería poder navegar por el sitio hasta cierto punto. Si visita http://nginx.test/en/docs/, debería obtener la página http://nginx.org/en/docs/ como respuesta.
+
+Entonces, como puede ver, en un nivel básico, la `proxy_pass` directiva simplemente pasa la solicitud de un cliente a un servidor de terceros y revierte la respuesta al cliente.
 
 ```sh
 
