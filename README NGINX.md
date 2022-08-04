@@ -2585,21 +2585,113 @@ Como puede ver, los encabezados se agregaron a la respuesta y cualquier navegado
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
-```sh
+### Cómo comprimir respuestas
 
-```
-
-```sh
-
-```
+La última técnica de optimización que mostraré hoy es bastante sencilla: comprimir las respuestas para reducir su tamaño.
 
 ```sh
+worker_processes auto;
 
+events {
+    worker_connections 1024;
+}
+
+http {
+    include /etc/nginx/mime.types;
+
+    gzip on;
+    gzip_comp_level 3;
+
+    gzip_types text/css text/javascript;
+
+    server {
+
+        listen 80;
+        server_name nginx-handbook.test;
+
+        root /srv/nginx-handbook-projects/static-demo;
+
+        location ~* \.(css|js|jpg)$ {
+            access_log off;
+
+            add_header Cache-Control public;
+            add_header Pragma public;
+            add_header Vary Accept-Encoding;
+            expires 1M;
+        }
+    }
 ```
+
+Si aún no está familiarizado con él, GZIP es un formato de archivo popular utilizado por las aplicaciones para la compresión y descompresión de archivos. NGINX puede utilizar este formato para comprimir respuestas usando las `gzip` directivas.
+
+Al escribir `gzip on` en el `http` contexto, le está dando instrucciones a NGINX para que comprima las respuestas. La `gzip_comp_level` directiva establece el nivel de compresión. Puede establecerlo en un número muy alto, pero eso no garantiza una mejor compresión. Establecer un número entre 1 y 4 le brinda un resultado eficiente. Por ejemplo, me gusta establecerlo en 3.
+
+De forma predeterminada, NGINX comprime las respuestas HTML. Para comprimir otros formatos de archivo, deberá pasarlos como parámetros a la `gzip_types` directiva. Al escribir `gzip_types text/css text/javascript;` , le está diciendo a NGINX que comprima cualquier archivo con los tipos mime de texto/css y texto/javascript.
+
+Configurar la compresión en NGINX no es suficiente. El cliente tiene que pedir la respuesta comprimida en lugar de las respuestas sin comprimir. Espero que recuerde la `add_header Vary Accept-Encoding;` línea en la sección anterior sobre el almacenamiento en caché. Este encabezado le permite saber al cliente que la respuesta puede variar según lo que acepte el cliente.
+
+Como ejemplo, si desea solicitar la versión sin comprimir del archivo mini.min.css del servidor, puede hacer algo como esto:
 
 ```sh
+curl -I http://nginx-handbook.test/mini.min.css
 
+# HTTP/1.1 200 OK
+# Server: nginx/1.18.0 (Ubuntu)
+# Date: Sun, 25 Apr 2021 16:30:32 GMT
+# Content-Type: text/css
+# Content-Length: 46887
+# Last-Modified: Sun, 25 Apr 2021 08:35:33 GMT
+# Connection: keep-alive
+# ETag: "608529d5-b727"
+# Expires: Tue, 25 May 2021 16:30:32 GMT
+# Cache-Control: max-age=2592000
+# Cache-Control: public
+# Pragma: public
+# Vary: Accept-Encoding
+# Accept-Ranges: bytes
 ```
+
+Como puede ver, no hay nada sobre la compresión. Ahora, si desea solicitar la versión comprimida del archivo, deberá enviar un encabezado adicional.
+
+```sh
+curl -I -H "Accept-Encoding: gzip" http://nginx-handbook.test/mini.min.css
+
+# HTTP/1.1 200 OK
+# Server: nginx/1.18.0 (Ubuntu)
+# Date: Sun, 25 Apr 2021 16:31:38 GMT
+# Content-Type: text/css
+# Last-Modified: Sun, 25 Apr 2021 08:35:33 GMT
+# Connection: keep-alive
+# ETag: W/"608529d5-b727"
+# Expires: Tue, 25 May 2021 16:31:38 GMT
+# Cache-Control: max-age=2592000
+# Cache-Control: public
+# Pragma: public
+# Vary: Accept-Encoding
+# Content-Encoding: gzip
+```
+
+Como puede ver en los encabezados de respuesta, `Content-Encoding` ahora está configurado para `gzip` indicar que esta es la versión comprimida del archivo.
+
+Ahora, si desea comparar la diferencia en el tamaño del archivo, puede hacer algo como esto:
+
+```sh
+cd ~
+mkdir compression-test && cd compression-test
+
+curl http://nginx-handbook.test/mini.min.css > uncompressed.css
+
+curl -H "Accept-Encoding: gzip" http://nginx-handbook.test/mini.min.css > compressed.css
+
+ls -lh
+
+# -rw-rw-r-- 1 vagrant vagrant 9.1K Apr 25 16:35 compressed.css
+# -rw-rw-r-- 1 vagrant vagrant  46K Apr 25 16:35 uncompressed.css
+```
+
+La versión sin comprimir del archivo es `46K` y la versión comprimida es `9.1K` casi seis veces más pequeña. En sitios de la vida real donde las hojas de estilo pueden ser mucho más grandes, la compresión puede hacer que sus respuestas sean más pequeñas y rápidas.
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
 
 ```sh
 
