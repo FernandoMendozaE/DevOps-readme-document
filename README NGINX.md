@@ -2534,7 +2534,7 @@ http {
         listen 80;
         server_name nginx-handbook.test;
 
-        root /srv/nginx-handbook-demo/static-demo;
+        root /srv/nginx-handbook-projects/static-demo;
 
         location ~* \.(css|js|jpg)$ {
             access_log off;
