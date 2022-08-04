@@ -69,6 +69,14 @@
       </ul>
     </li>
     <li><a href="#cómo-utilizar-nginx-como-equilibrador-de-carga">Cómo utilizar NGINX como equilibrador de carga</a></li>
+    <li>
+      <a href="#cómo-optimizar-nginx-para-obtener-el-máximo-rendimiento">Cómo optimizar NGINX para obtener el máximo rendimiento</a>
+      <ul>
+        <li><a href="#cómo-configurar-procesos-de-trabajo-y-conexiones-de-trabajo">Cómo configurar procesos de trabajo y conexiones de trabajo</a></li>
+        <li><a href="#cómo-almacenar-contenido-estático-en-caché">Cómo almacenar contenido estático en caché</a></li>
+        <li><a href="#cómo-comprimir-respuestas">Cómo comprimir respuestas</a></li>
+      </ul>
+    </li>
     <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
@@ -2333,37 +2341,176 @@ Puede cancelar el bucle pulsando `Ctrl + C` en su teclado. Como puede ver en las
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
-```sh
+### Cómo optimizar NGINX para obtener el máximo rendimiento
 
-```
+En esta sección del artículo, aprenderá sobre varias formas de obtener el máximo rendimiento de su servidor.
 
-```sh
+Algunos de estos métodos serán específicos de la aplicación, lo que significa que probablemente necesitarán ajustes teniendo en cuenta los requisitos de su aplicación. Pero algunas de ellas serán técnicas generales de optimización.
 
-```
+Al igual que en las secciones anteriores, los cambios en la configuración serán frecuentes en esta, así que no olvides validar y recargar tu archivo de configuración cada vez.
 
-```sh
+<p align="right">(<a href="#top">volver arriba</a>)</p>
 
-```
+### Cómo configurar procesos de trabajo y conexiones de trabajo
 
-```sh
-
-```
+Como ya mencioné en una sección anterior, NGINX puede generar múltiples procesos de trabajo capaces de manejar miles de solicitudes cada uno.
 
 ```sh
+sudo systemctl status nginx
 
+# ● nginx.service - A high performance web server and a reverse proxy server
+#      Loaded: loaded (/lib/systemd/system/nginx.service; enabled; vendor preset: enabled)
+#      Active: active (running) since Sun 2021-04-25 08:33:11 UTC; 5h 45min ago
+#        Docs: man:nginx(8)
+#    Main PID: 3904 (nginx)
+#       Tasks: 2 (limit: 1136)
+#      Memory: 3.2M
+#      CGroup: /system.slice/nginx.service
+#              ├─ 3904 nginx: master process /usr/sbin/nginx -g daemon on; master_process on;
+#              └─16443 nginx: worker process
 ```
+
+Como puede ver, en este momento solo hay un proceso de trabajo NGINX en el sistema. Este número, sin embargo, se puede cambiar haciendo un pequeño cambio en el archivo de configuración.
 
 ```sh
+worker_processes 2;
 
+events {
+
+}
+
+http {
+
+    server {
+
+        listen 80;
+        server_name nginx-handbook.test;
+
+        return 200 "worker processes and worker connections configuration!\n";
+    }
+}
 ```
+
+La `worker_process` directiva escrita en el `main` contexto es responsable de establecer la cantidad de procesos de trabajo para generar. Ahora verifique el servicio NGINX una vez más y debería ver dos procesos de trabajo:
 
 ```sh
+sudo systemctl status nginx
 
+# ● nginx.service - A high performance web server and a reverse proxy server
+#      Loaded: loaded (/lib/systemd/system/nginx.service; enabled; vendor preset: enabled)
+#      Active: active (running) since Sun 2021-04-25 08:33:11 UTC; 5h 54min ago
+#        Docs: man:nginx(8)
+#     Process: 22610 ExecReload=/usr/sbin/nginx -g daemon on; master_process on; -s reload (code=exited, status=0/SUCCESS)
+#    Main PID: 3904 (nginx)
+#       Tasks: 3 (limit: 1136)
+#      Memory: 3.7M
+#      CGroup: /system.slice/nginx.service
+#              ├─ 3904 nginx: master process /usr/sbin/nginx -g daemon on; master_process on;
+#              ├─22611 nginx: worker process
+#              └─22612 nginx: worker process
 ```
+
+Establecer el número de procesos de trabajo es fácil, pero determinar el número óptimo de procesos de trabajo requiere un poco más de trabajo.
+
+Los procesos de trabajo son de naturaleza asíncrona. Esto significa que procesarán las solicitudes entrantes tan rápido como lo permita el hardware.
+
+Ahora considere que su servidor se ejecuta en un procesador de un solo núcleo. Si establece la cantidad de procesos de trabajo en 1, ese único proceso utilizará el 100 % de la capacidad de la CPU. Pero si lo configura en 2, los dos procesos podrán utilizar el 50% de la CPU cada uno. Por lo tanto, aumentar la cantidad de procesos de trabajo no significa un mejor rendimiento.
+
+Una regla general para determinar el número óptimo de procesos de trabajo es **número de procesos de trabajo = número de núcleos de CPU** .
+
+Si está ejecutando en un servidor con una CPU de doble núcleo, la cantidad de procesos de trabajo debe establecerse en 2. En un núcleo cuádruple, debe establecerse en 4 ... y entiende la idea.
+
+Determinar la cantidad de CPU en su servidor es muy fácil en Linux.
 
 ```sh
+nproc
 
+# 1
 ```
+
+Estoy en una sola máquina virtual de CPU, por lo `npro` cque detecta que hay una CPU. Ahora que conoce el número de CPU, todo lo que queda por hacer es establecer el número en la configuración.
+
+Eso está muy bien, pero cada vez que actualice el servidor y cambie el número de CPU, tendrá que actualizar la configuración del servidor manualmente.
+
+NGINX proporciona una mejor manera de lidiar con este problema. Simplemente puede establecer la cantidad de procesos de trabajo `auto` y NGINX establecerá la cantidad de procesos en función de la cantidad de CPU automáticamente.
+
+```sh
+worker_processes auto;
+
+events {
+
+}
+
+http {
+
+    server {
+
+        listen 80;
+        server_name nginx-handbook.test;
+
+        return 200 "worker processes and worker connections configuration!\n";
+    }
+}
+```
+
+Inspeccione el proceso NGINX una vez más:
+
+```sh
+sudo systemctl status nginx
+
+# ● nginx.service - A high performance web server and a reverse proxy server
+#      Loaded: loaded (/lib/systemd/system/nginx.service; enabled; vendor preset: enabled)
+#      Active: active (running) since Sun 2021-04-25 08:33:11 UTC; 6h ago
+#        Docs: man:nginx(8)
+#     Process: 22610 ExecReload=/usr/sbin/nginx -g daemon on; master_process on; -s reload (code=exited, status=0/SUCCESS)
+#    Main PID: 3904 (nginx)
+#       Tasks: 2 (limit: 1136)
+#      Memory: 3.2M
+#      CGroup: /system.slice/nginx.service
+#              ├─ 3904 nginx: master process /usr/sbin/nginx -g daemon on; master_process on;
+#              └─23659 nginx: worker process
+```
+
+El número de procesos de trabajo vuelve a ser uno, porque eso es lo óptimo para este servidor.
+
+Además de los procesos de trabajo, también existe la conexión de trabajo, que indica el mayor número de conexiones que puede manejar un solo proceso de trabajo.
+
+Al igual que la cantidad de procesos de trabajo, este número también está relacionado con la cantidad de su núcleo de CPU y la cantidad de archivos que su sistema operativo puede abrir por núcleo.
+
+Averiguar este número es muy fácil en Linux:
+
+```sh
+ulimit -n
+
+# 1024
+```
+
+Ahora que tienes el número, todo lo que queda es establecerlo en la configuración:
+
+```sh
+worker_processes auto;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+
+    server {
+
+        listen 80;
+        server_name nginx-handbook.test;
+
+        return 200 "worker processes and worker connections configuration!\n";
+    }
+}
+```
+
+La `worker_connections` directiva es responsable de establecer el número de conexiones de trabajadores en una configuración. Esta es también la primera vez que trabaja con el `events` contexto.
+
+En una sección anterior, mencioné que este contexto se usa para establecer valores utilizados por NGINX a nivel general. La configuración de conexiones de trabajadores es un ejemplo de ello.
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
 
 ```sh
 
