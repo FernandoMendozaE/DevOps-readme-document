@@ -1862,29 +1862,116 @@ Entonces, como puede ver, en un nivel básico, la `proxy_pass` directiva simplem
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
-```sh
+### Node.js con NGINX
 
-```
+Ahora que sabe cómo configurar un servidor proxy inverso básico, puede servir una aplicación Node.js con proxy inverso mediante NGINX. He agregado una aplicación de demostración dentro del repositorio que viene con este artículo.
 
-```sh
+Si ya ha clonado el repositorio interno /`srv/nginx-handbook-projects` , el node-js-demoproyecto debería estar disponible en el `/srv/nginx-handbook-projects/node-js-demo` directorio.
 
-```
+La aplicación de demostración es un servidor HTTP simple que responde con un código de estado 200 y una carga JSON. Puede iniciar la aplicación simplemente ejecutándola `node app.js` , pero una mejor manera es usar PM2.
 
-```sh
-
-```
+Instale PM2 globalmente ejecutando `sudo npm install -g pm2` . Una vez completada la instalación, ejecute el siguiente comando mientras se encuentra dentro del `/srv/nginx-handbook-projects/node-js-demo` directorio:
 
 ```sh
+pm2 start app.js
 
+# [PM2] Process successfully started
+# ┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+# │ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+# ├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+# │ 0  │ app                │ fork     │ 0    │ online    │ 0%       │ 21.2mb   │
+# └────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
 ```
+
+La aplicación debería estar ejecutándose ahora, pero no debería ser accesible desde fuera del servidor. Para verificar si la aplicación se está ejecutando o no, envíe una solicitud de obtención a http://localhost:3000 desde el interior de su servidor:
 
 ```sh
+curl -i localhost:3000
 
+# HTTP/1.1 200 OK
+# X-Powered-By: Express
+# Content-Type: application/json; charset=utf-8
+# Content-Length: 62
+# ETag: W/"3e-XRN25R5fWNH2Tc8FhtUcX+RZFFo"
+# Date: Sat, 24 Apr 2021 12:09:55 GMT
+# Connection: keep-alive
+# Keep-Alive: timeout=5
+
+# { "status": "success", "message": "You're reading The NGINX Handbook!" }
 ```
+
+Si obtiene una respuesta de 200, entonces el servidor está funcionando bien. Ahora, para configurar NGINX como proxy inverso, abra su archivo de configuración y actualice su contenido de la siguiente manera:
 
 ```sh
+events {
 
+}
+
+http {
+    server {
+        listen 80;
+        server_name nginx-handbook.test;
+
+        location / {
+            proxy_pass http://localhost:3000;
+        }
+    }
+}
 ```
+
+Nada nuevo que explicar aquí. Simplemente está pasando la solicitud recibida a la aplicación Node.js que se ejecuta en el puerto 3000. Ahora, si envía una solicitud al servidor desde el exterior, debería obtener una respuesta de la siguiente manera:
+
+```sh
+curl -i http://nginx-handbook.test
+
+# HTTP/1.1 200 OK
+# Server: nginx/1.18.0 (Ubuntu)
+# Date: Sat, 24 Apr 2021 14:58:01 GMT
+# Content-Type: application/json
+# Transfer-Encoding: chunked
+# Connection: keep-alive
+
+# { "status": "success", "message": "You're reading The NGINX Handbook!" }
+```
+
+Aunque esto funciona para un servidor básico como este, es posible que deba agregar algunas directivas más para que funcione en un escenario del mundo real según los requisitos de su aplicación.
+
+Por ejemplo, si su aplicación maneja conexiones de socket web, debe actualizar la configuración de la siguiente manera:
+
+```sh
+events {
+
+}
+
+http {
+    server {
+        listen 80;
+            server_name nginx-handbook.test;
+
+            location / {
+                proxy_pass http://localhost:3000;
+                proxy_http_version 1.1;
+                proxy_set_header Upgrade $http_upgrade;
+                proxy_set_header Connection 'upgrade';
+            }
+    }
+
+}
+```
+
+La `proxy_http_version` directiva establece la versión HTTP para el servidor. Por defecto es 1.0, pero web socket requiere que sea al menos 1.1. La `proxy_set_header` directiva se utiliza para establecer un encabezado en el servidor de fondo. La sintaxis genérica para esta directiva es la siguiente:
+
+```sh
+proxy_set_header <header name> <header value>
+```
+
+Entonces, al escribir `proxy_set_header Upgrade $http_upgrade;` , le está indicando a NGINX que pase el valor de la `$http_upgrade` variable como un encabezado con nombre `Upgrade` , lo mismo para el `Connection` encabezado.
+
+Si desea obtener más información sobre el proxy de socket web, este enlace (https://nginx.org/en/docs/http/websocket.html) a los documentos oficiales de NGINX puede ser de ayuda.
+
+Dependiendo de los encabezados requeridos por su aplicación, es posible que deba establecer más de ellos. Pero la configuración mencionada anteriormente se usa muy comúnmente para servir aplicaciones Node.js.
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
 
 ```sh
 
