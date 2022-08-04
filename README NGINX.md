@@ -2416,7 +2416,7 @@ Los procesos de trabajo son de naturaleza asíncrona. Esto significa que procesa
 
 Ahora considere que su servidor se ejecuta en un procesador de un solo núcleo. Si establece la cantidad de procesos de trabajo en 1, ese único proceso utilizará el 100 % de la capacidad de la CPU. Pero si lo configura en 2, los dos procesos podrán utilizar el 50% de la CPU cada uno. Por lo tanto, aumentar la cantidad de procesos de trabajo no significa un mejor rendimiento.
 
-Una regla general para determinar el número óptimo de procesos de trabajo es **número de procesos de trabajo = número de núcleos de CPU** .
+Una regla general para determinar el número óptimo de procesos de trabajo es **número de procesos de trabajo = número de núcleos de CPU**.
 
 Si está ejecutando en un servidor con una CPU de doble núcleo, la cantidad de procesos de trabajo debe establecerse en 2. En un núcleo cuádruple, debe establecerse en 4 ... y entiende la idea.
 
@@ -2511,6 +2511,127 @@ La `worker_connections` directiva es responsable de establecer el número de con
 En una sección anterior, mencioné que este contexto se usa para establecer valores utilizados por NGINX a nivel general. La configuración de conexiones de trabajadores es un ejemplo de ello.
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
+
+### Cómo almacenar contenido estático en caché
+
+La segunda técnica para optimizar su servidor es almacenar contenido estático en caché. Independientemente de la aplicación que esté sirviendo, siempre se está sirviendo una cierta cantidad de contenido estático, como hojas de estilo, imágenes, etc.
+
+Teniendo en cuenta que no es probable que este contenido cambie con mucha frecuencia, es una buena idea almacenarlos en caché durante un cierto período de tiempo. NGINX también facilita esta tarea.
+
+```sh
+worker_processes auto;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+
+    include /etc/nginx/mime.types;
+
+    server {
+
+        listen 80;
+        server_name nginx-handbook.test;
+
+        root /srv/nginx-handbook-demo/static-demo;
+
+        location ~* \.(css|js|jpg)$ {
+            access_log off;
+
+            add_header Cache-Control public;
+            add_header Pragma public;
+            add_header Vary Accept-Encoding;
+            expires 1M;
+        }
+    }
+}
+```
+
+Al escribir `location ~\* .(css|js|jpg)$` , le indica a NGINX que coincida con las solicitudes que solicitan un archivo que termine con `.css` , `.js` y `.jpg`.
+
+Puede usar la `add_header` directiva para incluir un encabezado en la respuesta al cliente. Anteriormente, vio la `proxy_set_header` directiva utilizada para establecer encabezados en una solicitud en curso al servidor backend. La `add_header` directiva, por otro lado, solo agrega un encabezado dado a la respuesta.
+
+Al configurar el `Cache-Control` encabezado como público, le está diciendo al cliente que este contenido se puede almacenar en caché de cualquier manera. El `Pragma` encabezado es solo una versión anterior del `Cache-Control` encabezado y hace más o menos lo mismo.
+
+El siguiente encabezado, `Vary` , es responsable de informar al cliente que este contenido almacenado en caché puede variar.
+
+El valor de `Accept-Encoding` significa que el contenido puede variar dependiendo de la codificación de contenido aceptada por el cliente. Esto se aclarará más en la siguiente sección.
+
+Finalmente, la `expires` directiva le permite configurar el `Expires` encabezado convenientemente. La `expires` directiva toma la duración del tiempo que este caché será válido. Al configurarlo, `1M` le está diciendo a NGINX que almacene en caché el contenido durante un mes. También puede configurarlo en `10m` 10 minutos, `24h` 24 horas, etc.
+
+Ahora, para probar la configuración, envíe una solicitud del archivo the-nginx-handbook.jpg desde el servidor:
+
+```sh
+curl -I http://nginx-handbook.test/the-nginx-handbook.jpg
+
+# HTTP/1.1 200 OK
+# Server: nginx/1.18.0 (Ubuntu)
+# Date: Sun, 25 Apr 2021 15:58:22 GMT
+# Content-Type: image/jpeg
+# Content-Length: 19209
+# Last-Modified: Sun, 25 Apr 2021 08:35:33 GMT
+# Connection: keep-alive
+# ETag: "608529d5-4b09"
+# Expires: Tue, 25 May 2021 15:58:22 GMT
+# Cache-Control: max-age=2592000
+# Cache-Control: public
+# Pragma: public
+# Vary: Accept-Encoding
+# Accept-Ranges: bytes
+```
+
+Como puede ver, los encabezados se agregaron a la respuesta y cualquier navegador moderno debería poder interpretarlos.
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
 
 ```sh
 
