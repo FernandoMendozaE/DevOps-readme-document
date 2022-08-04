@@ -2065,15 +2065,15 @@ sudo find / -name *fpm.sock
 # /var/lib/dpkg/alternatives/php-fpm.sock
 ```
 
-El `/run/php/php-fpm.sock` archivo hace referencia a la última versión de PHP-FPM instalada en su sistema. ?_Prefiero usar el que tiene el número de versión_. De esta manera, incluso si PHP-FPM se actualiza, estaré seguro de la versión que estoy usando.
+El `/run/php/php-fpm.sock` archivo hace referencia a la última versión de PHP-FPM instalada en su sistema. _Prefiero usar el que tiene el número de versión_. De esta manera, incluso si PHP-FPM se actualiza, estaré seguro de la versión que estoy usando.
 
 A diferencia de pasar solicitudes a través de HTTP, pasar solicitudes a través de FPM requiere que pasemos información adicional.
 
 La forma general de pasar información extra al servicio FPM es usando la `fastcgi_param` directiva. Como mínimo, deberá pasar el método de solicitud y el nombre del script al servicio de back-end para que funcione el proxy.
 
-El `fastcgi_param REQUEST_METHOD $request_method;` pasa el método de solicitud al back-end y la f`astcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;` línea pasa la ubicación exacta del script PHP para ejecutar.
+El `fastcgi_param REQUEST_METHOD $request_method;` pasa el método de solicitud al back-end y la `fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;` línea pasa la ubicación exacta del script PHP para ejecutar.
 
-En este estado, su configuración debería funcionar. Para probarlo, visite su servidor y debería recibir algo como esto:
+En este estado, su configuración debería funcionar. Para probarlo, visite su servidor (http://nginx-handbook.test/) y debería recibir algo como esto:
 
 <br>
 <div align="center"> 
