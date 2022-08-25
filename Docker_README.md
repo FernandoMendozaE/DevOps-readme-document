@@ -34,8 +34,8 @@
         <li><a href="#hello-world-en-docker">Hello World en Docker</a>
         </li>
         <li><a href="#que-es-un-contenedor">Que es un Contenedor</a></li>
-        <li><a href="#que-es-una-imagen-focker?">Que es una imagen Docker</a></li>
-        <li><a href="#descripción-general-de-la-arquitectura-de-Docker">Descripción general de la arquitectura de Docker</a></li>
+        <li><a href="#que-es-una-imagen-docker">Que es una imagen Docker</a></li>
+        <li><a href="#descripción-general-de-la-arquitectura-de-docker">Descripción general de la arquitectura de Docker</a></li>
       </ul>
     </li>
     <li><a href="#contributing">Contributing</a></li>
