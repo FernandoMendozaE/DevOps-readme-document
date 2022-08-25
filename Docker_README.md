@@ -10,8 +10,8 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://www.nginx.com/">
-    <img src="images/docker.png" alt="Logo" width="150" height="90">
+  <a href="https://docs.docker.com/">
+    <img src="images/docker.png" alt="Logo" width="180" height="120">
   </a>
 
   <h3 align="center">Documentación-Comandos</h3>
@@ -52,13 +52,13 @@
 
 La **`contenedorización`** implica encapsular o empaquetar el código de software y todas sus dependencias para que pueda ejecutarse de manera uniforme y consistente en cualquier infraestructura.
 
-**`Docker`** es una implementación de este tipo. Es una plataforma de contenedorización de código abierto que le permite contener sus aplicaciones, compartirlas mediante registros públicos o privados y también organizarlas.
+**`Docker`** es una plataforma de contenedorización de código abierto que le permite contener sus aplicaciones, compartirlas mediante registros públicos o privados y también organizarlas.
 
 ## Conceptos básicos de Docker
 
-### Hello World en DockeR
+### Hello World en Docker
 
-Abre la terminal y ejecuta el siguiente comando:
+Habra la terminal y ejecuta el siguiente comando:
 
 ```sh
 docker run hello-world
@@ -91,9 +91,9 @@ docker run hello-world
 #  https://docs.docker.com/get-started/
 ```
 
-La imagen hello-world es un ejemplo de contenedorización mínima con Docker. Tiene un solo programa compilado a partir de un archivo hello.c responsable de imprimir el mensaje que estás viendo en tu terminal.
+La imagen [hello-world](https://hub.docker.com/_/hello-world) es un ejemplo de contenedorización mínima con Docker. Tiene un solo programa compilado a partir de un archivo [hello.c](https://github.com/docker-library/hello-world/blob/master/hello.c) responsable de imprimir el mensaje que estás viendo en tu terminal.
 
-Ahora en su terminal, puede usar el docker ps -acomando para ver todos los contenedores que se están ejecutando actualmente o se han ejecutado en el pasado:
+Ahora en su terminal, puede usar el `docker ps -a` comando para ver todos los contenedores que se están ejecutando actualmente o se han ejecutado en el pasado:
 
 ```sh
 docker ps -a
@@ -106,11 +106,11 @@ En la salida:
 
 - `CONTAINER ID` – Se ejecuta una identificación del contenedor con ID `128ec8ceab71` .
 
-- `IMAGE` – Usa la imagen `hello-worl` .
+- `IMAGE` – Usa la imagen `hello-world` .
 
 - `STATUS` – Tiene `Exited (0) 13 seconds ago` donde el `(0)` código de salida significa que no se produjo ningún error durante el tiempo de ejecución del contenedor.
 
-- `NAMES` - se ejecutó un contenedor llamado `exciting_chebyshev`
+- `NAMES` - Se ejecutó un contenedor llamado `exciting_chebyshev`
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
@@ -154,7 +154,7 @@ docker run alpine uname -a
 # Linux f08dbbe9199b 5.8.0-22-generic #23-Ubuntu SMP Fri Oct 9 00:34:40 UTC 2020 x86_64 Linux
 ```
 
-En el bloque de código anterior, ejecuté el uname -acomando en mi sistema operativo host para imprimir los detalles del kernel. Luego, en la siguiente línea, ejecuté el mismo comando dentro de un contenedor que ejecuta Alpine Linux .
+En el bloque de código anterior, ejecuté el `uname -a` comando en mi sistema operativo host para imprimir los detalles del kernel. Luego, en la siguiente línea, ejecuté el mismo comando dentro de un contenedor que ejecuta [Alpine Linux](https://alpinelinux.org/) .
 
 Como puede ver en el resultado, el contenedor está usando el kernel de mi sistema operativo host. Esto demuestra que los contenedores virtualizan el sistema operativo host en lugar de tener un sistema operativo propio.
 
@@ -168,7 +168,7 @@ En el pasado, diferentes motores de contenedores tenían diferentes formatos de 
 
 Los contenedores son solo imágenes en estado de ejecución. Cuando obtiene una imagen de Internet y ejecuta un contenedor con esa imagen, esencialmente crea otra capa temporal de escritura encima de las anteriores de solo lectura.
 
-Este concepto se volverá mucho más claro en las próximas secciones de este libro. Pero por ahora, tenga en cuenta que las imágenes son archivos de solo lectura de varias capas que contienen su aplicación en el estado deseado.
+> Tenga en cuenta que las imágenes son archivos de solo lectura de varias capas que contienen su aplicación en el estado deseado.
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
@@ -186,7 +186,9 @@ Según los documentos oficiales:
 
 > "Docker utiliza una arquitectura cliente-servidor. El cliente de Docker se comunica con el demonio de Docker , que hace el trabajo pesado de construir, ejecutar y distribuir sus contenedores de Docker".
 
-Ahora es el momento de que entiendas cómo todas estas piezas del rompecabezas que acabas de aprender funcionan en armonía. Antes de sumergirme en la explicación de lo que realmente sucede cuando ejecuta el docker run hello-worldcomando, permítame mostrarle un pequeño diagrama que hice:
+<br>
+
+Ahora es el momento de que entiendas cómo todas estas piezas del rompecabezas que acabas de aprender funcionan en armonía. Antes de sumergirme en la explicación de lo que realmente sucede cuando ejecuta el docker run `hello-world` comando, permítame mostrarle un pequeño diagrama que hice:
 
 <div align="center"> 
   <img src="https://www.freecodecamp.org/news/content/images/2021/01/docker-run-hello-world.svg" alt="screenshot" />
@@ -211,7 +213,7 @@ Digest: sha256:d58e752213a51785838f9eed2b7a498ffa1cb3aa7f946dda11af39286c3db9a9
 Status: Downloaded newer image for hello-world:latest
 ```
 
-Si hay una versión más nueva de la imagen disponible en el registro público, el daemon recuperará la imagen nuevamente. Esa `:latest` es una etiqueta. Las imágenes suelen tener etiquetas significativas para indicar versiones o compilaciones. Aprenderá sobre esto con mayor detalle más adelante.
+Si hay una versión más nueva de la imagen disponible en el registro público, el daemon recuperará la imagen nuevamente. Esa `:latest` es una etiqueta. Las imágenes suelen tener etiquetas significativas para indicar versiones o compilaciones.
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
