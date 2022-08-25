@@ -38,6 +38,18 @@
         <li><a href="#descripción-general-de-la-arquitectura-de-docker">Descripción general de la arquitectura de Docker</a></li>
       </ul>
     </li>
+    <li>
+      <a href="#conceptos-básicos-de-manipulación-de-contenedores-docker">Conceptos de manipulación de contenedores Docker</a>
+      <ul>
+        <li><a href="#cómo-ejecutar-un-contenedor-run">Cómo ejecutar un contenedor (run)</a></li>
+        <li><a href="#cómo-publicar-un-puerto---publish-o--p">Cómo publicar un puerto (--publish o -p)</a></li>
+        <li><a href="#cómo-usar-el-modo-separado---detach-o--d">Cómo usar el modo separado (--detach o -d)</a></li>
+        <li><a href="#cómo-enumerar-contenedores-container-ls-o-ps">Cómo enumerar contenedores (container ls o ps)</a></li>
+        <li><a href="#cómo-nombrar-o-cambiar-el-nombre-de-un-contenedor">Cómo nombrar o cambiar el nombre de un contenedor</a></li>
+        <li><a href="#"></a></li>
+        <li><a href="#"></a></li>
+      </ul>
+    </li>
     <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
@@ -217,6 +229,184 @@ Si hay una versión más nueva de la imagen disponible en el registro público, 
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
+### Conceptos básicos de manipulación de contenedores Docker
+
+La manipulación de contenedores es una de las tareas más comunes que realizará todos los días, por lo que es crucial tener una comprensión adecuada de los diversos comandos.
+
+Sin embargo, tenga en cuenta que esta no es una lista exhaustiva de todos los comandos que puede ejecutar en Docker. Hablaré sólo de los más comunes. Cada vez que desee obtener más información sobre los comandos disponibles, simplemente visite la [referencia](https://docs.docker.com/engine/reference/commandline/docker/) oficial de la línea de comandos de Docker.
+
+## Cómo ejecutar un contenedor (run)
+
+La sintaxis genérica de este comando es la siguiente:
+
+```sh
+docker run <image name>
+```
+
+Aunque este es un comando perfectamente válido, hay una mejor manera de enviar comandos al dockerdaemon, la línea de comandos se reestructuró para tener la siguiente sintaxis:
+
+```sh
+docker <object> <command> <options>
+```
+
+En esta sintaxis:
+
+- `object` indica el tipo de objeto Docker que manipulará. Puede ser un `container`, `image` o `network` un `volume` objeto.
+- `command` indica la tarea a realizar por el daemon, es decir el `run` comando.
+- `options` puede ser cualquier parámetro válido que pueda anular el comportamiento predeterminado del comando, como la `--publish` opción para la asignación de puertos.
+
+Ahora, siguiendo esta sintaxis, el runcomando se puede escribir de la siguiente manera:
+
+```sh
+docker container run <image name>
+```
+
+`image name` Puede ser cualquier imagen de un registro en línea o de su sistema local . Como ejemplo, puede intentar ejecutar un contenedor utilizando la imagen [hello-world](https://hub.docker.com/_/hello-world) .
+
+```sh
+docker container run hello-world
+# Unable to find image 'hello-world:latest' locally
+# latest: Pulling from library/hello-world
+# 2db29710123e: Pull complete
+# Digest: sha256:7d246653d0511db2a6b2e0436cfd0e52ac8c066000264b3ce63331ac66dca625
+# Status: Downloaded newer image for hello-world:latest
+
+# Hello from Docker!
+# This message shows that your installation appears to be working correctly.
+
+# To generate this message, Docker took the following steps:
+#  1. The Docker client contacted the Docker daemon.
+#  2. The Docker daemon pulled the "hello-world" image from the Docker Hub.
+#     (amd64)
+#  3. The Docker daemon created a new container from that image which runs the
+#     executable that produces the output you are currently reading.
+#  4. The Docker daemon streamed that output to the Docker client, which sent it
+#     to your terminal.
+
+# To try something more ambitious, you can run an Ubuntu container with:
+#  $ docker run -it ubuntu bash
+
+# Share images, automate workflows, and more with a free Docker ID:
+#  https://hub.docker.com/
+
+# For more examples and ideas, visit:
+#  https://docs.docker.com/get-started/
+```
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
+## Cómo publicar un puerto (--publish o -p)
+
+Los contenedores son entornos aislados. Su sistema host no sabe nada sobre lo que sucede dentro de un contenedor. Por lo tanto, las aplicaciones que se ejecutan dentro de un contenedor permanecen inaccesibles desde el exterior.
+
+Para permitir el acceso desde fuera de un contenedor, debe publicar el puerto adecuado dentro del contenedor en un puerto de su red local. La sintaxis común para la opción `--publish` o `-p` es la siguiente:
+
+```sh
+--publish <host port>:<container port>
+```
+
+Ejecute el siguiente comando en su terminal:
+
+```sh
+docker container run -p 8080:80 fhsinchy/hello-dock
+```
+
+Cuando escribió `-p 8080:80` en la subsección anterior, significaba que cualquier solicitud enviada al puerto 8080 de su sistema host se reenviará al puerto 80 dentro del contenedor‌.
+
+Ahora, para acceder a la aplicación en su navegador, visite http://127.0.0.1:8080.
+
+<div align="center"> 
+  <img src="https://www.freecodecamp.org/news/content/images/size/w1600/2021/01/hello-dock.png" alt="screenshot" />
+</div>
+
+Puede detener el contenedor simplemente presionando la `ctrl + c` combinación de teclas mientras la ventana de la terminal está enfocada o cerrando la ventana de la terminal por completo.
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
+## Cómo usar el modo separado (--detach o -d)
+
+Otra opción muy popular del `run` comando es la opción `--detach` o `-d` . En el ejemplo anterior, para que el contenedor siguiera ejecutándose, tenía que mantener abierta la ventana de la terminal. Cerrar la ventana del terminal también detuvo el contenedor en ejecución.
+
+Para anular este comportamiento y mantener un contenedor ejecutándose en segundo plano, puede incluir la `--detach` opción con el `run` comando de la siguiente manera:
+
+```sh
+docker container run -d -p 8080:80 fhsinchy/hello-dock
+
+# 9f21cb77705810797c4b847dbd330d9c732ffddba14fb435470567a7a3f46cdc
+```
+
+A diferencia del ejemplo anterior, esta vez no se le arrojará un muro de texto. En cambio, lo que obtendrá es la ID del contenedor recién creado.
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
+## Cómo enumerar contenedores (container ls o ps)
+
+El `container ls` comando se puede usar para enumerar los contenedores que se están ejecutando actualmente. Para hacerlo, ejecute el siguiente comando:
+
+```sh
+docker container ls
+
+# CONTAINER ID        IMAGE                 COMMAND                  CREATED             STATUS              PORTS                  NAMES
+# 9f21cb777058        fhsinchy/hello-dock   "/docker-entrypoint.…"   5 seconds ago       Up 5 seconds        0.0.0.0:8080->80/tcp   gifted_sammet
+```
+
+Se está ejecutando un contenedor llamado `gifted_sammet`. Fue creado `5 seconds ago` y el estado es `Up 5 seconds` , el que indica que el contenedor se ha estado ejecutando correctamente desde su creación.
+
+El `CONTAINER ID` es `9f21cb777058` que son los primeros 12 caracteres del ID de contenedor completo. El ID de contenedor completo `9f21cb77705810797c4b847dbd330d9c732ffddba14fb435470567a7a3f46cdc` es de 64 caracteres. Este ID de contenedor completo se imprimió como resultado del `docker container run` comando en la sección anterior.
+
+En la lista debajo de la `PORTS` columna, el puerto 8080 de su red local apunta hacia el puerto 80 dentro del contenedor. El nombre `gifted_sammet` es generado por Docker y puede ser algo completamente diferente en su computadora.
+
+- Para enumerar los contenedores que se han ejecutado en el pasado, puede usar la opción `--all` o `-a` :
+
+  ```sh
+  docker ps -a
+
+  # CONTAINER ID        IMAGE                 COMMAND                  CREATED             STATUS                     PORTS                  NAMES
+  # 9f21cb777058        fhsinchy/hello-dock   "/docker-entrypoint.…"   2 minutes ago       Up 2 minutes               0.0.0.0:8080->80/tcp   gifted_sammet
+  # 6cf52771dde1        fhsinchy/hello-dock   "/docker-entrypoint.…"   3 minutes ago       Exited (0) 3 minutes ago                          reverent_torvalds
+  # 128ec8ceab71        hello-world           "/hello"
+  ```
+
+  Como puede ver, el segundo contenedor de la lista `reverent_torvalds` se creó anteriormente y salió con el código de estado 0, lo que indica que no se produjo ningún error durante el tiempo de ejecución del contenedor.
+
+  <br>
+
+- Para visualizar el último contenedor que ha realizado una operacion, puede usar la opción `-l` :
+
+  ```sh
+  docker ps -l
+  CONTAINER ID   IMAGE         COMMAND    CREATED          STATUS                      PORTS     NAMES
+  62058bf739a1   hello-world   "/hello"   46 minutes ago   Exited (0) 46 minutes ago             vigilant_poitras
+  ```
+
+- Para visualizar e los ultimos contenedores que han realizado alguna operacion, ademas se puede especificar la cantidad que se desea mostrar, puede usar la opción `-n` :
+
+  ```sh
+  docker ps -n 4
+  CONTAINER ID   IMAGE              COMMAND                  CREATED          STATUS                          PORTS      NAMES
+  62058bf739a1   hello-world        "/hello"                 58 minutes ago   Exited (0) 58 minutes ago                  vigilant_poitras
+  e72e9a6b0185   f8ee70060666       "docker-entrypoint.s…"   3 days ago       Exited (255) 3 days ago         3000/tcp   notes-api-dev
+  4a31ad1dec73   postgres:12        "docker-entrypoint.s…"   3 days ago       Exited (255) 3 days ago         5432/tcp   notes-db-dev
+  2697ebccfc75   notes-router:dev   "/docker-entrypoint.…"   3 days ago       Restarting (1) 19 seconds ago              notes-router-dev
+  ```
+
+  Mostrar n últimos contenedores creados (incluye todos los estados), en el ejemplo mostrara los ultimos 4 contenedores que hayan realizado alguna operacion.
+
+  <br>
+
+- Para poder ver el tamaño que ocupa un contendor en el sistema, puede usar la opción `-s` :
+
+  ```sh
+  CONTAINER ID   IMAGE                        COMMAND                  CREATED      STATUS                          PORTS                      NAMES              SIZE
+  2697ebccfc75   notes-router:dev             "/docker-entrypoint.…"   3 days ago   Restarting (1) 45 seconds ago                              notes-router-dev   468B (virtual 23.5MB)
+  d53d1c98d18b   testing-playwright-api_api   "npm start"              4 days ago   Up 2 hours                      0.0.0.0:3001->3000/tcp     affiliation-api    208kB (virtual 1.91GB)
+  1faaed01558d   mongo                        "docker-entrypoint.s…"   4 days ago   Up 2 hours                      0.0.0.0:27019->27017/tcp   affiliation-db     0B (virtual 697MB)
+  ```
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+<p align="right">(<a href="#top">volver arriba</a>)</p>
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
 <!-- MARKDOWN LINKS & IMAGES -->
