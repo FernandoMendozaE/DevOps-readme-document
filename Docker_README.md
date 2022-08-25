@@ -45,7 +45,11 @@
         <li><a href="#cómo-publicar-un-puerto---publish-o--p">Cómo publicar un puerto (--publish o -p)</a></li>
         <li><a href="#cómo-usar-el-modo-separado---detach-o--d">Cómo usar el modo separado (--detach o -d)</a></li>
         <li><a href="#cómo-enumerar-contenedores-container-ls-o-ps">Cómo enumerar contenedores (container ls o ps)</a></li>
-        <li><a href="#cómo-nombrar-o-cambiar-el-nombre-de-un-contenedor">Cómo nombrar o cambiar el nombre de un contenedor</a></li>
+        <li><a href="#cómo-nombrar-o-cambiar-el-nombre-de-un-contenedor---name-y-rename">Cómo nombrar o cambiar el nombre de un contenedor</a></li>
+        <li><a href="#cómo-detener-o-matar-un-contenedor-en-funcionamiento-stop-o-kill">Cómo detener o matar un contenedor en funcionamiento (stop o kill)</a></li>
+        <li><a href="#cómo-reiniciar-un-contenedor-start-o-restart">Cómo reiniciar un contenedor (start o restart)</a></li>
+        <li><a href="#"></a></li>
+        <li><a href="#"></a></li>
         <li><a href="#"></a></li>
         <li><a href="#"></a></li>
       </ul>
@@ -404,8 +408,98 @@ En la lista debajo de la `PORTS` columna, el puerto 8080 de su red local apunta 
   ```
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
+
+## Cómo nombrar o cambiar el nombre de un contenedor (--name y rename)
+
+1. Nombrar un contenedor se puede lograr usando la `--name` opción. Para ejecutar otro contenedor utilizando la `fhsinchy/hello-dock` imagen con el nombre `hello-dock-container` , puede ejecutar el siguiente comando:
+
+   ```sh
+   docker container run -d -p 8888:80 --name hello-dock-container fhsinchy/hello-dock
+   # b1db06e400c4c5e81a93a64d30acc1bf821bed63af36cab5cdb95d25e114f5fb
+   ```
+
+2. Para que puede cambiar el nombre de los contenedores antiguos con el container renamecomando. La sintaxis del comando es la siguiente:
+
+   ```sh
+   docker container rename <container identifier> <new name>
+   ```
+
+   <p align="right">(<a href="#top">volver arriba</a>)</p>
+
+## Cómo detener o matar un contenedor en funcionamiento (stop o kill)
+
+Hay dos comandos que se ocupan de esta tarea. El primero es el container stopcomando. La sintaxis genérica del comando es la siguiente:
+
+```sh
+docker container stop <container identifier>
+```
+
+Donde `container identifier` puede ser el **id** o el **nombre del contenedor**.
+
+Ahora ejecute el siguiente comando para detener el contenedor:
+
+```sh
+docker container stop hello-dock-container
+
+# hello-dock-container
+```
+
+Si usa el nombre como identificador, obtendrá el nombre como resultado. El `stop` comando cierra un contenedor con gracia mediante el envío de una `SIGTERM` señal. Si el contenedor no se detiene dentro de un período determinado, `SIGKILL` se envía una señal que cierra el contenedor inmediatamente.
+
+En los casos en los que desee enviar una `SIGKILL` señal en lugar de una `SIGTERM` señal, puede usar el `container kill` comando en su lugar. El container killcomando sigue la misma sintaxis que el `stop` comando.
+
+```sh
+docker container kill hello-dock-container-2
+
+# hello-dock-container-2
+```
+
 <p align="right">(<a href="#top">volver arriba</a>)</p>
+
+## Cómo reiniciar un contenedor (start o restart)
+
+Cuando digo reiniciar me refiero a dos escenarios específicamente. Son los siguientes:
+
+- Reiniciar un contenedor que se detuvo o eliminó previamente.
+- Reinicio de un contenedor en ejecución.
+
+El `container start` comando se puede usar para iniciar cualquier contenedor detenido o eliminado. La sintaxis del comando es la siguiente:
+
+```sh
+docker container start <container identifier>
+```
+
+Ahora, en escenarios en los que le gustaría reiniciar un contenedor en ejecución, puede usar el `container restart` comando. La sintaxis del comando es la siguiente:
+
+```sh
+docker container restart <container identifier>
+```
+
+La principal diferencia entre los dos comandos es que el `container restart` comando intenta detener el contenedor de destino y luego lo vuelve a iniciar, mientras que el comando de inicio simplemente inicia un contenedor ya detenido.
+
+En el caso de un contenedor detenido, ambos comandos son exactamente iguales. Pero en el caso de un contenedor en ejecución, debe usar el `container restart` comando.
+
 <p align="right">(<a href="#top">volver arriba</a>)</p>
+```sh
+
+````
+
+```sh
+
+````
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
