@@ -389,7 +389,7 @@ En la lista debajo de la `PORTS` columna, el puerto 8080 de su red local apunta 
   62058bf739a1   hello-world   "/hello"   46 minutes ago   Exited (0) 46 minutes ago             vigilant_poitras
   ```
 
-- **Para visualizar e los ultimos contenedores que han realizado alguna operacion, ademas se puede especificar la cantidad que se desea mostrar, puede usar la opción `-n` :**
+- **Para visualizar los últimos contenedores que han realizado alguna operacion, ademas se puede especificar la cantidad que se desea mostrar, puede usar la opción `-n` :**
 
   ```sh
   docker ps -n 4
@@ -405,10 +405,11 @@ En la lista debajo de la `PORTS` columna, el puerto 8080 de su red local apunta 
 - **Para poder ver el tamaño que ocupa un contendor en el sistema, puede usar la opción `-s` :**
 
   ```sh
-  CONTAINER ID   IMAGE                        COMMAND                  CREATED      STATUS                          PORTS                      NAMES              SIZE
-  2697ebccfc75   notes-router:dev             "/docker-entrypoint.…"   3 days ago   Restarting (1) 45 seconds ago                              notes-router-dev   468B (virtual 23.5MB)
-  d53d1c98d18b   testing-playwright-api_api   "npm start"              4 days ago   Up 2 hours                      0.0.0.0:3001->3000/tcp     affiliation-api    208kB (virtual 1.91GB)
-  1faaed01558d   mongo                        "docker-entrypoint.s…"   4 days ago   Up 2 hours                      0.0.0.0:27019->27017/tcp   affiliation-db     0B (virtual 697MB)
+  docker ps -s
+  # CONTAINER ID   IMAGE                        COMMAND                  CREATED          STATUS             PORTS                      NAMES                  SIZE
+  # 87f0fc540ec7   fhsinchy/hello-dock          "/docker-entrypoint.…"   11 minutes ago   Up 11 minutes      0.0.0.0:8080->80/tcp       compassionate_wilson   1.12kB (virtual 21.9MB)
+  # d53d1c98d18b   testing-playwright-api_api   "npm start"              5 days ago       Up About an hour   0.0.0.0:3001->3000/tcp     affiliation-api        208kB (virtual 1.91GB)
+  # 1faaed01558d   mongo                        "docker-entrypoint.s…"   5 days ago       Up About an hour   0.0.0.0:27019->27017/tcp   affiliation-db         0B (virtual 697MB)
   ```
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
