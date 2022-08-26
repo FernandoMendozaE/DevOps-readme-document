@@ -55,6 +55,18 @@
         <li><a href="#"></a></li>
       </ul>
     </li>
+    <li>
+      <a href="#conceptos-básicos-de-manipulación-de-imágenes-de-docker">Conceptos básicos de manipulación de imágenes de Docker</a>
+      <ul>
+        <li><a href="#cómo-crear-una-imagen-acoplable-build">Cómo crear una imagen acoplable (build)</a></li>
+        <li><a href="#"></a></li>
+        <li><a href="#"></a></li>
+        <li><a href="#"></a></li>
+        <li><a href="#"></a></li>
+        <li><a href="#"></a></li>
+        <li><a href="#"></a></li>
+      </ul>
+    </li>
     <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
@@ -189,7 +201,7 @@ Los contenedores son solo imágenes en estado de ejecución. Cuando obtiene una 
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
-## Descripción general de la arquitectura de Docker
+### Descripción general de la arquitectura de Docker
 
 Ahora que se ha familiarizado con la mayoría de los conceptos fundamentales relacionados con la creación de contenedores y Docker, es hora de que comprenda cómo se diseñó Docker como software.
 
@@ -234,13 +246,13 @@ Si hay una versión más nueva de la imagen disponible en el registro público, 
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
-### Conceptos básicos de manipulación de contenedores Docker
+## Conceptos básicos de manipulación de contenedores Docker
 
 La manipulación de contenedores es una de las tareas más comunes que realizará todos los días, por lo que es crucial tener una comprensión adecuada de los diversos comandos.
 
 Sin embargo, tenga en cuenta que esta no es una lista exhaustiva de todos los comandos que puede ejecutar en Docker. Hablaré sólo de los más comunes. Cada vez que desee obtener más información sobre los comandos disponibles, simplemente visite la [referencia](https://docs.docker.com/engine/reference/commandline/docker/) oficial de la línea de comandos de Docker.
 
-## Cómo ejecutar un contenedor (run)
+### Cómo ejecutar un contenedor (run)
 
 La sintaxis genérica de este comando es la siguiente:
 
@@ -300,7 +312,7 @@ docker container run hello-world
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
-## Cómo publicar un puerto (--publish o -p)
+### Cómo publicar un puerto (--publish o -p)
 
 Los contenedores son entornos aislados. Su sistema host no sabe nada sobre lo que sucede dentro de un contenedor. Por lo tanto, las aplicaciones que se ejecutan dentro de un contenedor permanecen inaccesibles desde el exterior.
 
@@ -335,7 +347,7 @@ Puede detener el contenedor simplemente presionando la `ctrl + c` combinación d
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
-## Cómo usar el modo separado (--detach o -d)
+### Cómo usar el modo separado (--detach o -d)
 
 Otra opción muy popular del `run` comando es la opción `--detach` o `-d` . En el ejemplo anterior, para que el contenedor siguiera ejecutándose, tenía que mantener abierta la ventana de la terminal. Cerrar la ventana del terminal también detuvo el contenedor en ejecución.
 
@@ -351,7 +363,7 @@ A diferencia del ejemplo anterior, esta vez no se le arrojará un muro de texto.
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
-## Cómo enumerar contenedores (container ls o ps)
+### Cómo enumerar contenedores (container ls o ps)
 
 El `container ls` comando se puede usar para enumerar los contenedores que se están ejecutando actualmente. Para hacerlo, ejecute el siguiente comando:
 
@@ -414,7 +426,7 @@ En la lista debajo de la `PORTS` columna, el puerto 8080 de su red local apunta 
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
-## Cómo nombrar o cambiar el nombre de un contenedor (--name y rename)
+### Cómo nombrar o cambiar el nombre de un contenedor (--name y rename)
 
 1. Nombrar un contenedor se puede lograr usando la `--name` opción. Para ejecutar otro contenedor utilizando la `fhsinchy/hello-dock` imagen con el nombre `hello-dock-container` , puede ejecutar el siguiente comando:
 
@@ -431,7 +443,7 @@ En la lista debajo de la `PORTS` columna, el puerto 8080 de su red local apunta 
 
    <p align="right">(<a href="#top">volver arriba</a>)</p>
 
-## Cómo detener o matar un contenedor en funcionamiento (stop o kill)
+### Cómo detener o matar un contenedor en funcionamiento (stop o kill)
 
 Hay dos comandos que se ocupan de esta tarea. El primero es el `container stop` comando. La sintaxis genérica del comando es la siguiente:
 
@@ -461,7 +473,7 @@ docker container kill hello-dock-container-2
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
-## Cómo reiniciar un contenedor (start o restart)
+### Cómo reiniciar un contenedor (start o restart)
 
 Cuando digo reiniciar me refiero a dos escenarios específicamente. Son los siguientes:
 
@@ -486,7 +498,7 @@ En el caso de un contenedor detenido, ambos comandos son exactamente iguales. Pe
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
-## Cómo crear un contenedor sin ejecutar (create o start)
+### Cómo crear un contenedor sin ejecutar (create o start)
 
 Hasta ahora en esta sección, ha iniciado contenedores usando el `container run` comando que en realidad es una combinación de dos comandos separados. Estos comandos son los siguientes:
 
@@ -525,7 +537,7 @@ El contenedor `STATUS` ha cambiado de `Created` a `Up 29 seconds` , lo que indic
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
-## Cómo quitar contenedores colgantes (rm y --rm)
+### Cómo quitar contenedores colgantes (rm y --rm)
 
 Para eliminar un contenedor detenido, puede usar el `container rm` comando. La sintaxis genérica es la siguiente:
 
@@ -630,7 +642,7 @@ También puede eliminar varios contenedores a la vez pasando sus identificadores
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
-## Cómo ejecutar un contenedor en modo interactivo (-it)
+### Cómo ejecutar un contenedor en modo interactivo (-it)
 
 Las distribuciones populares como Ubuntu , Fedora y Debian tienen imágenes oficiales de Docker disponibles en el hub. Los lenguajes de programación como python , php , go o tiempos de ejecución como node y deno tienen sus imágenes oficiales.
 
@@ -667,7 +679,7 @@ La `-it` opción prepara el escenario para que interactúes con cualquier progra
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
-## Cómo ejecutar comandos dentro de un contenedor
+### Cómo ejecutar comandos dentro de un contenedor
 
 La sintaxis genérica para pasar un comando a un contenedor que no se está ejecutando es la siguiente:
 
@@ -685,6 +697,12 @@ docker run alpine uname -a
 Ejecuté `uname -a` para imprimir los detalles del kernel dentro de un contenedor que ejecuta Alpine Linux.
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
+
+## Conceptos básicos de manipulación de imágenes de Docker
+
+En esta sección, aprenderá los conceptos básicos para crear imágenes, ejecutar contenedores usándolas y compartirlas en línea.
+
+### Cómo crear una imagen acoplable (build)
 
 ```sh
 
