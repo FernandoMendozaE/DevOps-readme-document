@@ -60,10 +60,9 @@
         <li><a href="#cómo-crear-una-imagen-acoplable-build">Cómo crear una imagen acoplable (build)</a></li>
         <li><a href="#cómo-etiquetar-imágenes-de-docker--t-o---tag">Cómo etiquetar imágenes de Docker (-t o --tag)</a></li>
         <li><a href="#cómo-enumerar-imágenes-de-docker-images-o-image-ls">Cómo enumerar imágenes de Docker (images o image ls)</a></li>
-        <li><a href="#cómo-eliminar-imágenes-de-docker-rm">Cómo eliminar imágenes de Docker (rm)</a></li>
-        <li><a href="#"></a></li>
-        <li><a href="#"></a></li>
-        <li><a href="#"></a></li>
+        <li><a href="#cómo-eliminar-imágenes-de-docker-rmi-o-image-rm">Cómo eliminar imágenes de Docker (rmi o image rm)</a></li>
+        <li><a href="#usando-como-imagen-base-alpine-linux">Usando como imagen base Alpine Linux</a></li>
+        <li><a href="#cómo-compartir-sus-imágenes-de-docker-en-línea">Cómo compartir sus imágenes de Docker en línea</a></li>
       </ul>
     </li>
     <li><a href="#contributing">Contributing</a></li>
@@ -864,7 +863,7 @@ docker images
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
-### Cómo eliminar imágenes de Docker (rm)
+### Cómo eliminar imágenes de Docker (rmi o image rm)
 
 Las imágenes enumeradas aquí se pueden eliminar con el `image rm` comando. La sintaxis genérica es la siguiente:
 
@@ -922,33 +921,206 @@ docker image rm <image identifier>
 
   <p align="right">(<a href="#top">volver arriba</a>)</p>
 
-```sh
+### Usando como imagen base Alpine Linux
 
-```
+Si ha estado jugando con los contenedores desde hace algún tiempo, es posible que haya oído hablar de algo llamado [Alpine Linux](https://alpinelinux.org/). [Es una distribución de Linux](https://en.wikipedia.org/wiki/Linux) con todas las funciones como [Ubuntu](https://ubuntu.com/), [Debian](https://www.debian.org/) o [Fedora](https://getfedora.org/).
 
-```sh
+Pero lo bueno de Alpine es que está construido alrededor `musl` `libc` y `busybox` es liviano. Mientras que la última imagen de ubuntu pesa alrededor de 28 MB, [alpine](https://hub.docker.com/_/alpine) pesa 2,8 MB.
 
-```
+Además de la naturaleza liviana, Alpine también es seguro y se adapta mucho mejor para crear contenedores que las otras distribuciones.
 
-```sh
+Aunque no es tan fácil de usar como otras distribuciones comerciales, la transición a Alpine sigue siendo muy sencilla.
 
-```
-
-```sh
-
-```
+Cree un Dockerfile y copie el contenido de la siguiente manera:
 
 ```sh
+FROM alpine:latest
 
+EXPOSE 80
+
+ARG FILENAME="nginx-1.19.2"
+ARG EXTENSION="tar.gz"
+
+ADD https://nginx.org/download/${FILENAME}.${EXTENSION} .
+
+RUN apk add --no-cache pcre zlib && \
+    apk add --no-cache \
+            --virtual .build-deps \
+            build-base \
+            pcre-dev \
+            zlib-dev \
+            openssl-dev && \
+    tar -xvf ${FILENAME}.${EXTENSION} && rm ${FILENAME}.${EXTENSION} && \
+    cd ${FILENAME} && \
+    ./configure \
+        --sbin-path=/usr/bin/nginx \
+        --conf-path=/etc/nginx/nginx.conf \
+        --error-log-path=/var/log/nginx/error.log \
+        --http-log-path=/var/log/nginx/access.log \
+        --with-pcre \
+        --pid-path=/var/run/nginx.pid \
+        --with-http_ssl_module && \
+    make && make install && \
+    cd / && rm -rfv /${FILENAME} && \
+    apk del .build-deps
+
+CMD ["nginx", "-g", "daemon off;"]
 ```
+
+- En lugar de usar `apt-get install` para instalar paquetes, usamos `apk add` . La -`-no-cache` opción significa que el paquete descargado no se almacenará en caché. Del mismo modo, usaremos` apk del` en lugar de `apt-get remove` para desinstalar paquetes.
+- La `--virtual` opción para el `apk add` comando se usa para agrupar un grupo de paquetes en un solo paquete virtual para facilitar la administración. Los paquetes que se necesitan solo para construir el programa se etiquetan y `.build-deps` luego se eliminan en la línea 29 al ejecutar el `apk del .build-deps` comando. Puede obtener más información sobre los virtuales en los documentos oficiales.
+- Los nombres de los paquetes son un poco diferentes aquí. Por lo general, cada distribución de Linux tiene su repositorio de paquetes disponible para todos donde puede buscar paquetes. Si conoce los paquetes necesarios para una determinada tarea, puede dirigirse al repositorio designado para una distribución y buscarlo. [Puede buscar paquetes de Alpine Linux aquí](https://pkgs.alpinelinux.org/packages).
+
+Ahora cree una nueva imagen usando esto `Dockerfile` y vea la diferencia en el tamaño del archivo:
 
 ```sh
+docker image build --tag custom-nginx:built .
 
+# Sending build context to Docker daemon  1.055MB
+# Step 1/7 : FROM alpine:latest
+#  ---> 7731472c3f2a
+# Step 2/7 : EXPOSE 80
+#  ---> Running in 8336cfaaa48d
+# Removing intermediate container 8336cfaaa48d
+#  ---> d448a9049d01
+# Step 3/7 : ARG FILENAME="nginx-1.19.2"
+#  ---> Running in bb8b2eae9d74
+# Removing intermediate container bb8b2eae9d74
+#  ---> 87ca74f32fbe
+# Step 4/7 : ARG EXTENSION="tar.gz"
+#  ---> Running in aa09627fe48c
+# Removing intermediate container aa09627fe48c
+#  ---> 70cb557adb10
+# Step 5/7 : ADD https://nginx.org/download/${FILENAME}.${EXTENSION} .
+# Downloading [==================================================>]  1.049MB/1.049MB
+#  ---> b9790ce0c4d6
+# Step 6/7 : RUN apk add --no-cache pcre zlib &&     apk add --no-cache             --virtual .build-deps             build-base             pcre-dev             zlib-dev             openssl-dev &&     tar -xvf ${FILENAME}.${EXTENSION} && rm ${FILENAME}.${EXTENSION} &&     cd ${FILENAME} &&     ./configure         --sbin-path=/usr/bin/nginx         --conf-path=/etc/nginx/nginx.conf         --error-log-path=/var/log/nginx/error.log         --http-log-path=/var/log/nginx/access.log         --with-pcre         --pid-path=/var/run/nginx.pid         --with-http_ssl_module &&     make && make install &&     cd / && rm -rfv /${FILENAME} &&     apk del .build-deps
+#  ---> Running in 0b301f64ffc1
+### LONG INSTALLATION AND BUILD STUFF GOES HERE ###
+# Removing intermediate container 0b301f64ffc1
+#  ---> dc7e4161f975
+# Step 7/7 : CMD ["nginx", "-g", "daemon off;"]
+#  ---> Running in b579e4600247
+# Removing intermediate container b579e4600247
+#  ---> 3e186a3c6830
+# Successfully built 3e186a3c6830
+# Successfully tagged custom-nginx:built
+
+docker image ls
+
+# REPOSITORY         TAG       IMAGE ID       CREATED         SIZE
+# custom-nginx       built     3e186a3c6830   8 seconds ago   12.8MB
 ```
+
+Mientras que la versión de ubuntu ocupaba 81,6 MB, la versión alpina se ha reducido a 12,8 MB, lo que supone una gran ganancia. Además del `apk` administrador de paquetes, hay algunas otras cosas que difieren en Alpine de Ubuntu, pero no son tan importantes. Puedes buscar en Internet cada vez que te quedes atascado.
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
+### Cómo compartir sus imágenes de Docker en línea
+
+Ahora que sabe cómo hacer imágenes, es hora de compartirlas con el mundo. Compartir imágenes en línea es fácil. Todo lo que necesita es una cuenta en cualquiera de los registros en línea. Usaré [Docker Hub](https://hub.docker.com/) aquí.
+
+Vaya a la página de [registro](https://hub.docker.com/signup) y cree una cuenta gratuita. Una cuenta gratuita le permite alojar repositorios públicos ilimitados y un repositorio privado.
+
+Una vez que haya creado la cuenta, deberá iniciar sesión con la CLI de Docker. Así que abre tu terminal y ejecuta el siguiente comando para hacerlo:
 
 ```sh
+docker login
 
+# Login with your Docker ID to push and pull images from Docker Hub. If you don't have a Docker ID, head over to https://hub.docker.com to create one.
+# Username: fhsinchy
+# Password:
+# WARNING! Your password will be stored unencrypted in /home/fhsinchy/.docker/config.json.
+# Configure a credential helper to remove this warning. See
+# https://docs.docker.com/engine/reference/commandline/login/#credentials-store
+#
+# Login Succeeded
 ```
+
+Se le pedirá su nombre de usuario y contraseña. Si los ingresa correctamente, debe iniciar sesión en su cuenta correctamente.
+
+Para compartir una imagen en línea, la imagen debe estar etiquetada. Ya aprendió sobre el etiquetado en una subsección anterior. Solo para refrescar su memoria, la sintaxis genérica para la opción `--tag` o `-t` es la siguiente
+
+```sh
+--tag <image repository>:<image tag>
+```
+
+Como ejemplo, compartamos la `custom-nginx` imagen en línea. Para hacerlo, abra una nueva ventana de terminal dentro del `custom-nginx` directorio del proyecto.
+
+Para compartir una imagen en línea, deberá etiquetarla siguiendo la `<docker hub username>/<image name>:<image tag>` sintaxis. Mi nombre de usuario es `fhsinchy` por lo que el comando se verá así:
+
+```sh
+docker image build --tag fhsinchy/custom-nginx:latest .
+
+# Step 1/9 : FROM ubuntu:latest
+#  ---> d70eaf7277ea
+# Step 2/9 : RUN apt-get update &&     apt-get install build-essential                    libpcre3                     libpcre3-dev                     zlib1g                     zlib1g-dev                     libssl-dev                     -y &&     apt-get clean && rm -rf /var/lib/apt/lists/*
+#  ---> cbe1ced3da11
+### LONG INSTALLATION STUFF GOES HERE ###
+# Step 3/9 : ARG FILENAME="nginx-1.19.2"
+#  ---> Running in 33b62a0e9ffb
+# Removing intermediate container 33b62a0e9ffb
+#  ---> fafc0aceb9c8
+# Step 4/9 : ARG EXTENSION="tar.gz"
+#  ---> Running in 5c32eeb1bb11
+# Removing intermediate container 5c32eeb1bb11
+#  ---> 36efdf6efacc
+# Step 5/9 : ADD https://nginx.org/download/${FILENAME}.${EXTENSION} .
+# Downloading [==================================================>]  1.049MB/1.049MB
+#  ---> dba252f8d609
+# Step 6/9 : RUN tar -xvf ${FILENAME}.${EXTENSION} && rm ${FILENAME}.${EXTENSION}
+#  ---> Running in 2f5b091b2125
+### LONG EXTRACTION STUFF GOES HERE ###
+# Removing intermediate container 2f5b091b2125
+#  ---> 2c9a325d74f1
+# Step 7/9 : RUN cd ${FILENAME} &&     ./configure         --sbin-path=/usr/bin/nginx         --conf-path=/etc/nginx/nginx.conf         --error-log-path=/var/log/nginx/error.log         --http-log-path=/var/log/nginx/access.log         --with-pcre         --pid-path=/var/run/nginx.pid         --with-http_ssl_module &&     make && make install
+#  ---> Running in 11cc82dd5186
+### LONG CONFIGURATION AND BUILD STUFF GOES HERE ###
+# Removing intermediate container 11cc82dd5186
+#  ---> 6c122e485ec8
+# Step 8/9 : RUN rm -rf /${FILENAME}}
+#  ---> Running in 04102366960b
+# Removing intermediate container 04102366960b
+#  ---> 6bfa35420a73
+# Step 9/9 : CMD ["nginx", "-g", "daemon off;"]
+#  ---> Running in 63ee44b571bb
+# Removing intermediate container 63ee44b571bb
+#  ---> 4ce79556db1b
+# Successfully built 4ce79556db1b
+# Successfully tagged fhsinchy/custom-nginx:latest
+```
+
+En este comando, el f`hsinchy/custom-nginx` es el repositorio de imágenes y `latesct` es la etiqueta. El nombre de la imagen puede ser el que quieras y no se puede cambiar una vez que hayas subido la imagen. La etiqueta se puede cambiar cuando lo desee y, por lo general, refleja la versión del software o diferentes tipos de compilaciones.
+
+Toma la `node` imagen como ejemplo. La `node:lts` imagen se refiere a la versión de soporte a largo plazo de Node.js, mientras que la `node:lts-alpine` versión se refiere a la versión de Node.js creada para Alpine Linux, que es mucho más pequeña que la normal.
+
+Si no asigna ninguna etiqueta a la imagen, se etiquetará automáticamente como `latest` . Pero eso no significa que la `latest` etiqueta siempre hará referencia a la última versión. Si, por algún motivo, etiqueta explícitamente una versión anterior de la imagen como `latest` , entonces Docker no hará ningún esfuerzo adicional para verificarlo.
+
+Una vez que se ha creado la imagen, puede cargarla ejecutando el siguiente comando:
+
+```sh
+docker image push <image repository>:<image tag>
+```
+
+Así que en mi caso el comando será el siguiente:
+
+```sh
+docker image push fhsinchy/custom-nginx:latest
+
+# The push refers to repository [docker.io/fhsinchy/custom-nginx]
+# 4352b1b1d9f5: Pushed
+# a4518dd720bd: Pushed
+# 1d756dc4e694: Pushed
+# d7a7e2b6321a: Pushed
+# f6253634dc78: Mounted from library/ubuntu
+# 9069f84dbbe9: Mounted from library/ubuntu
+# bacd3af13903: Mounted from library/ubuntu
+# latest: digest: sha256:ffe93440256c9edb2ed67bf3bba3c204fec3a46a36ac53358899ce1a9eee497a size: 1788
+```
+
+Dependiendo del tamaño de la imagen, la carga puede demorar algún tiempo. Una vez que haya terminado, debería poder encontrar la imagen en la página de perfil de su hub.
+
+  <p align="right">(<a href="#top">volver arriba</a>)</p>
 
 ```sh
 
