@@ -713,7 +713,7 @@ Trabajaremos con un administrador de listas de tareas simple que se ejecuta en N
 En este punto, su equipo de desarrollo es bastante pequeño y simplemente está creando una aplicación para probar su MVP (producto mínimo viable). Desea mostrar cómo funciona y qué es capaz de hacer sin tener que pensar en cómo funcionará para un equipo grande, varios desarrolladores, etc.
 
 <div align="center"> 
-  <img src="https://docs.docker.com/get-started/images/todo-list-sample.png" alt="screenshot" />
+  <img src="https://docs.docker.com/get-started/images/todo-list-sample.png" alt="screenshot" width="500"/>
 </div>
 
 #### Obtén la aplicación
@@ -793,7 +793,7 @@ Ahora que tenemos una imagen, ejecutemos la aplicación. Para hacerlo, usaremos 
 2. Después de unos segundos, abra su navegador web en http://localhost:3000 . Deberías ver nuestra aplicación.
 
 <div align="center"> 
-  <img src="https://docs.docker.com/get-started/images/todo-list-empty.png" alt="screenshot" />
+  <img src="https://docs.docker.com/get-started/images/todo-list-empty.png" alt="screenshot" width="500"/>
 </div>
 
 ```sh
