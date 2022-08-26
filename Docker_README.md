@@ -45,7 +45,7 @@
         <li><a href="#cómo-publicar-un-puerto---publish-o--p">Cómo publicar un puerto (--publish o -p)</a></li>
         <li><a href="#cómo-usar-el-modo-separado---detach-o--d">Cómo usar el modo separado (--detach o -d)</a></li>
         <li><a href="#cómo-enumerar-contenedores-container-ls-o-ps">Cómo enumerar contenedores (container ls o ps)</a></li>
-        <li><a href="#cómo-nombrar-o-cambiar-el-nombre-de-un-contenedor---name-y-rename">Cómo nombrar o cambiar el nombre de un contenedor</a></li>
+        <li><a href="#cómo-nombrar-o-cambiar-el-nombre-de-un-contenedor---name-y-rename">Cómo nombrar o cambiar el nombre de un contenedor (name y rename)</a></li>
         <li><a href="#cómo-detener-o-matar-un-contenedor-en-funcionamiento-stop-o-kill">Cómo detener o matar un contenedor en funcionamiento (stop o kill)</a></li>
         <li><a href="#cómo-reiniciar-un-contenedor-start-o-restart">Cómo reiniciar un contenedor (start o restart)</a></li>
         <li><a href="#cómo-crear-un-contenedor-sin-ejecutar-create-o-start">Cómo crear un contenedor sin ejecutar (create o start)</a></li>
@@ -433,7 +433,7 @@ En la lista debajo de la `PORTS` columna, el puerto 8080 de su red local apunta 
 
 ## Cómo detener o matar un contenedor en funcionamiento (stop o kill)
 
-Hay dos comandos que se ocupan de esta tarea. El primero es el container stopcomando. La sintaxis genérica del comando es la siguiente:
+Hay dos comandos que se ocupan de esta tarea. El primero es el `container stop` comando. La sintaxis genérica del comando es la siguiente:
 
 ```sh
 docker container stop <container identifier>
@@ -480,7 +480,7 @@ Ahora, en escenarios en los que le gustaría reiniciar un contenedor en ejecuci�
 docker container restart <container identifier>
 ```
 
-La principal diferencia entre los dos comandos es que el `container restart` comando intenta detener el contenedor de destino y luego lo vuelve a iniciar, mientras que el comando de inicio simplemente inicia un contenedor ya detenido.
+La principal diferencia entre los dos comandos es que el `container restart` comando intenta detener el contenedor de destino y luego lo vuelve a iniciar, mientras que el comando `container start` simplemente inicia un contenedor ya detenido.
 
 En el caso de un contenedor detenido, ambos comandos son exactamente iguales. Pero en el caso de un contenedor en ejecución, debe usar el `container restart` comando.
 
@@ -527,22 +527,13 @@ El contenedor `STATUS` ha cambiado de `Created` a `Up 29 seconds` , lo que indic
 
 ## Cómo quitar contenedores colgantes (rm y --rm)
 
-Estos contenedores colgantes pueden ocupar espacio o pueden entrar en conflicto con los contenedores más nuevos.
-
 Para eliminar un contenedor detenido, puede usar el `container rm` comando. La sintaxis genérica es la siguiente:
 
 ```sh
 docker container rm <container identifier>
 ```
 
-- **Eliminar contenedores colgantes**
-  También puede eliminar varios contenedores a la vez pasando sus identificadores uno tras otro separados por espacios.
-
-  O, en lugar de eliminar contenedores individuales, si desea eliminar todos los contenedores colgantes de una sola vez, puede usar el `container prune` comando.
-
-  ```sh
-  docker container prune
-  ```
+También puede eliminar varios contenedores a la vez pasando sus identificadores uno tras otro separados por espacios.
 
 - **Eliminar todos los contenedores terminados**
 
@@ -573,6 +564,14 @@ docker container rm <container identifier>
 
   ```sh
   docker rm $(docker ps -a -f status=exited -f status=created -q)
+  ```
+
+- **Eliminar contenedores colgantes**
+
+  En lugar de eliminar contenedores individuales, si desea eliminar todos los contenedores colgantes de una sola vez, puede usar el `container prune` comando.
+
+  ```sh
+  docker container prune
   ```
 
 - **Detener y eliminar todos los contenedores**
@@ -683,7 +682,7 @@ docker run alpine uname -a
 # Linux f08dbbe9199b 5.8.0-22-gener
 ```
 
-En este comando, he ejecutado el `uname -a` comando dentro de un contenedor Alpine Linux. Escenarios como este (donde todo lo que quieres hacer es ejecutar un determinado comando dentro de un determinado contenedor).
+En el bloque de código anterior, ejecuté el `uname -a` para imprimir los detalles del kernel dentro de un contenedor que ejecuta Alpine Linux.
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
