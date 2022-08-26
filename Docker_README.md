@@ -52,16 +52,15 @@
         <li><a href="#cómo-quitar-contenedores-colgantes-rm-y---rm">Cómo quitar contenedores colgantes (rm y --rm)</a></li>
         <li><a href="#cómo-ejecutar-un-contenedor-en-modo-interactivo--it">Cómo ejecutar un contenedor en modo interactivo (it)</a></li>
         <li><a href="#cómo-ejecutar-comandos-dentro-de-un-contenedor">Cómo ejecutar comandos dentro de un contenedor</a></li>
-        <li><a href="#"></a></li>
       </ul>
     </li>
     <li>
       <a href="#conceptos-básicos-de-manipulación-de-imágenes-de-docker">Conceptos básicos de manipulación de imágenes de Docker</a>
       <ul>
         <li><a href="#cómo-crear-una-imagen-acoplable-build">Cómo crear una imagen acoplable (build)</a></li>
-        <li><a href="#"></a></li>
-        <li><a href="#"></a></li>
-        <li><a href="#"></a></li>
+        <li><a href="#cómo-etiquetar-imágenes-de-docker--t-o---tag">Cómo etiquetar imágenes de Docker (-t o --tag)</a></li>
+        <li><a href="#cómo-enumerar-imágenes-de-docker-images-o-image-ls">Cómo enumerar imágenes de Docker (images o image ls)</a></li>
+        <li><a href="#cómo-eliminar-imágenes-de-docker-rm">Cómo eliminar imágenes de Docker (rm)</a></li>
         <li><a href="#"></a></li>
         <li><a href="#"></a></li>
         <li><a href="#"></a></li>
@@ -796,49 +795,132 @@ Ahora que tenemos una imagen, ejecutemos la aplicación. Para hacerlo, usaremos 
   <img src="https://docs.docker.com/get-started/images/todo-list-empty.png" alt="screenshot" width="500"/>
 </div>
 
-```sh
+<p align="right">(<a href="#top">volver arriba</a>)</p>
 
-```
+### Cómo etiquetar imágenes de Docker (-t o --tag)
 
-```sh
+Al igual que los contenedores, puede asignar identificadores personalizados a sus imágenes en lugar de confiar en la identificación generada aleatoriamente. En el caso de una imagen, se llama etiquetar en lugar de nombrar. La opción `--tag` o `-t` se utiliza en tales casos.
 
-```
-
-```sh
-
-```
+La sintaxis genérica para la opción es la siguiente:
 
 ```sh
-
+--tag <image repository>:<image tag>
 ```
+
+Tome la imagen mysql oficial , por ejemplo. Si desea ejecutar un contenedor con una versión específica de MySQL, como 5.7, puede ejecutar `docker container run mysql:5.7` donde `mysql` es la imagen del repositorio y `5.7` es el tag.
+
+Usaremos el anterior ejemplo para un mejor entendimiento, para etiquetar su imagen `getting-started` puede ejecutar el siguiente comando:
 
 ```sh
-
+docker image build -t getting-started:packaded .
+# [+] Building 13.5s (16/16) FINISHED
+#  => [internal] load build definition from Dockerfile                                                               0.0s
+#  => => transferring dockerfile: 227B                                                                               0.0s
+#  => [internal] load .dockerignore                                                                                  0.0s
+#  => => transferring context: 2B                                                                                    0.0s
+#  => resolve image config for docker.io/docker/dockerfile:1                                                        10.2s
+#  => [auth] docker/dockerfile:pull token for registry-1.docker.io                                                   0.0s
+#  => CACHED docker-image://docker.io/docker/dockerfile:1@sha256:443aab4ca21183e069e7d8b2dc68006594f40bddf1b15bbd83  0.0s
+#  => [internal] load build definition from Dockerfile                                                               0.0s
+#  => [internal] load .dockerignore                                                                                  0.0s
+#  => [internal] load metadata for docker.io/library/node:12-alpine                                                  1.9s
+#  => [auth] library/node:pull token for registry-1.docker.io                                                        0.0s
+#  => [1/5] FROM docker.io/library/node:12-alpine@sha256:d4b15b3d48f42059a15bd659be60afe21762aae9d6cbea6f124440895c  0.0s
+#  => [internal] load build context                                                                                  0.6s
+#  => => transferring context: 4.62MB                                                                                0.6s
+#  => CACHED [2/5] RUN apk add --no-cache python2 g++ make                                                           0.0s
+#  => CACHED [3/5] WORKDIR /app                                                                                      0.0s
+#  => CACHED [4/5] COPY . .                                                                                          0.0s
+#  => CACHED [5/5] RUN yarn install --production                                                                     0.0s
+#  => exporting to image                                                                                             0.1s
+#  => => exporting layers                                                                                            0.0s
+#  => => writing image sha256:58eba0bc3efe3f87537245740ae5aca8b79fd3e58470eb63a541a1495900be31                       0.0s
+#  => => naming to docker.io/library/getting-started:packaded
 ```
+
+En los casos en los que olvidó etiquetar una imagen durante el tiempo de compilación, o tal vez quiera cambiar la etiqueta, puede usar el `image tag` comando para hacerlo:
 
 ```sh
+docker image tag <image id> <image repository>:<image tag>
 
+## or ##
+
+docker image tag <image repository>:<image tag> <new image repository>:<new image tag>
 ```
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
+### Cómo enumerar imágenes de Docker (images o image ls)
+
+Puede usar el `images` comando para enumerar todas las imágenes en su sistema local:
 
 ```sh
+docker images
 
+# REPOSITORY     TAG        IMAGE ID       CREATED         SIZE
+# <none>         <none>     3199372aa3fc   7 seconds ago   132MB
+# custom-nginx   packaged   f8837621b99d   4 minutes ago   132MB
 ```
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
+### Cómo eliminar imágenes de Docker (rm)
+
+Las imágenes enumeradas aquí se pueden eliminar con el `image rm` comando. La sintaxis genérica es la siguiente:
 
 ```sh
-
+docker image rm <image identifier>
 ```
 
-```sh
+- **Eliminar una o más imágenes específicas**
 
-```
+  Utilice el comando `docker images` con el indicador `-a` para localizar el ID de las imágenes que quiere eliminar. Esto le mostrará todas las imágenes, incluidas las capas de imagen intermedias. Cuando localice las imágenes que desee eliminar, puede pasar su ID o etiqueta a `docker rmi` :
 
-```sh
+  Enumerar:
 
-```
+  ```sh
+  docker images -a
+  ```
 
-```sh
+  Eliminar:
 
-```
+  ```sh
+  docker rmi Image Image
+  ```
+
+- **Eliminar imágenes pendientes**
+
+  Las imágenes de Docker constan de varias capas. Las imágenes pendientes son capas que no tienen relación con imágenes etiquetadas. Ya no sirven para nada y ocupan espacio en el disco. Se pueden ubicar añadiendo el indicador de filtro `-f` junto con el valor `dangling=true` al comando `docker images` . Si está seguro de que quiere eliminarlas, puede utilizar el comando` docker images purge` :
+
+  Enumerar:
+
+  ```sh
+  docker images -f dangling=true
+  ```
+
+  Eliminar:
+
+  ```sh
+  docker images purge
+  ```
+
+- **Eliminar todas las imágenes**
+
+  Es posible enumerar todas las imágenes de Docker de un sistema añadiendo `-a` al comando `docker images` . Una vez que esté seguro de que desea eliminarlas por completo, puede añadir el indicador `-q` para pasar el ID de la imagen a `docker rmi` :
+
+  Enumerar:
+
+  ```sh
+  docker images -a
+  ```
+
+  Eliminar:
+
+  ```sh
+  docker rmi $(docker images -a -q)
+  ```
+
+  <p align="right">(<a href="#top">volver arriba</a>)</p>
 
 ```sh
 
