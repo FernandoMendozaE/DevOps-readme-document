@@ -702,7 +702,327 @@ Ejecuté `uname -a` para imprimir los detalles del kernel dentro de un contenedo
 
 En esta sección, aprenderá los conceptos básicos para crear imágenes, ejecutar contenedores usándolas y compartirlas en línea.
 
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
 ### Cómo crear una imagen acoplable (build)
+
+Para la explicación usaremos el siguiente ejemplo:
+
+Trabajaremos con un administrador de listas de tareas simple que se ejecuta en Node.js. Si no está familiarizado con Node.js, no se preocupe. No se necesita experiencia real en JavaScript.
+
+En este punto, su equipo de desarrollo es bastante pequeño y simplemente está creando una aplicación para probar su MVP (producto mínimo viable). Desea mostrar cómo funciona y qué es capaz de hacer sin tener que pensar en cómo funcionará para un equipo grande, varios desarrolladores, etc.
+
+<div align="center"> 
+  <img src="https://docs.docker.com/get-started/images/todo-list-sample.png" alt="screenshot" />
+</div>
+
+#### Obtén la aplicación
+
+Antes de que podamos ejecutar la aplicación, necesitamos obtener el código fuente de la aplicación en nuestra máquina.
+
+1. Descargue el contenido de la aplicación desde el [repositorio de inicio](https://github.com/docker/getting-started/tree/master) .
+
+2. Una vez extraído diríjase a la carpeta app, use su editor de código favorito para abrir el proyecto. Si necesita un editor, puede usar Visual Studio Code . Debería ver los `package.json` dos subdirectorios `( srcy spec)` .
+
+#### Crea la imagen del contenedor de la aplicación
+
+Para construir la aplicación, necesitamos usar un archivo Dockerfile. Un Dockerfile es simplemente un script de instrucciones basado en texto que se usa para crear una imagen de contenedor. Si ha creado Dockerfiles antes, es posible que vea algunas fallas en el Dockerfile a continuación. Pero no te preocupes. Los repasamos.
+
+1. Cree un archivo con el nombre `Dockerfile` en la misma carpeta que el archivo `package.json` con los siguientes contenidos.
+
+   ```sh
+   # syntax=docker/dockerfile:1
+   FROM node:12-alpine
+   RUN apk add --no-cache python2 g++ make
+   WORKDIR /app
+   COPY . .
+   RUN yarn install --production
+   CMD ["node", "src/index.js"]
+   EXPOSE 3000
+   ```
+
+2. Si aún no lo ha hecho, abra una terminal y vaya al `app` directorio con el archivo `Dockerfile` . Ahora crea la imagen del contenedor usando el `docker build` comando.
+
+   ```sh
+   docker build -t getting-started .
+   # [+] Building 47.0s (16/16) FINISHED
+   #  => [internal] load build definition from Dockerfile                                                                                       0.1s
+   #  => => transferring dockerfile: 227B                                                                                                       0.0s
+   #  => [internal] load .dockerignore                                                                                                          0.0s
+   #  => => transferring context: 2B                                                                                                            0.0s
+   #  => resolve image config for docker.io/docker/dockerfile:1                                                                                 3.7s
+   #  => [auth] docker/dockerfile:pull token for registry-1.docker.io                                                                           0.0s
+   #  => CACHED docker-image://docker.io/docker/dockerfile:1@sha256:443aab4ca21183e069e7d8b2dc68006594f40bddf1b15bbd83f5137bd93e80e2            0.0s
+   #  => [internal] load build definition from Dockerfile                                                                                       0.0s
+   #  => [internal] load .dockerignore                                                                                                          0.0s
+   #  => [internal] load metadata for docker.io/library/node:12-alpine                                                                          2.3s
+   #  => [auth] library/node:pull token for registry-1.docker.io                                                                                0.0s
+   #  => [1/5] FROM docker.io/library/node:12-alpine@sha256:d4b15b3d48f42059a15bd659be60afe21762aae9d6cbea6f124440895c27db68                    0.0s
+   #  => [internal] load build context                                                                                                          0.3s
+   #  => => transferring context: 4.62MB                                                                                                        0.2s
+   #  => CACHED [2/5] RUN apk add --no-cache python2 g++ make                                                                                   0.0s
+   #  => CACHED [3/5] WORKDIR /app                                                                                                              0.0s
+   #  => [4/5] COPY . .                                                                                                                         0.3s
+   #  => [5/5] RUN yarn install --production                                                                                                   35.9s
+   #  => exporting to image                                                                                                                     3.6s
+   #  => => exporting layers                                                                                                                    3.6s
+   #  => => writing image sha256:58eba0bc3efe3f87537245740ae5aca8b79fd3e58470eb63a541a1495900be31                                               0.0s
+   #  => => naming to docker.io/library/getting-started                                                                                         0.0s
+   ```
+
+   Este comando usó Dockerfile para crear una nueva imagen de contenedor. Es posible que haya notado que se descargaron muchas "capas". Esto se debe a que le indicamos al constructor que queríamos comenzar desde la `node:12-alpine` imagen. Pero, como no teníamos eso en nuestra máquina, esa imagen necesitaba ser descargada.
+
+   Después de descargar la imagen, la copiamos en nuestra aplicación y la usamos `yarn` para instalar las dependencias de nuestra aplicación. La `CMD`directiva especifica el comando predeterminado que se ejecutará al iniciar un contenedor desde esta imagen.
+
+   Finalmente, la **`-t`** bandera etiqueta nuestra imagen. Piense en esto simplemente como un nombre legible por humanos para la imagen final. Dado que nombramos la imagen `getting-started` , podemos hacer referencia a esa imagen cuando ejecutamos un contenedor.
+
+   El **`.`** al final del `docker build` comando le dice a Docker que debe buscar `Dockerfile` en el directorio actual.
+
+#### Iniciar un contenedor de aplicaciones
+
+Ahora que tenemos una imagen, ejecutemos la aplicación. Para hacerlo, usaremos el `docker run` comando.
+
+1. Inicie su contenedor usando el docker runcomando y especifique el nombre de la imagen que acabamos de crear:
+
+   ```sh
+   docker run -dp 3000:3000 getting-started
+   ```
+
+¿Recuerdas las banderas `-d` y ? `-p` estamos ejecutando el nuevo contenedor en modo "separado" (en segundo plano) y creando una asignación entre el puerto 3000 del host y el puerto 3000 del contenedor. Sin la asignación de puertos, no podríamos acceder a la aplicación.
+
+2. Después de unos segundos, abra su navegador web en http://localhost:3000 . Deberías ver nuestra aplicación.
+
+<div align="center"> 
+  <img src="https://docs.docker.com/get-started/images/todo-list-empty.png" alt="screenshot" />
+</div>
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
 
 ```sh
 
