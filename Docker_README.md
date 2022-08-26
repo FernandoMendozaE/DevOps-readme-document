@@ -260,13 +260,13 @@ En esta sintaxis:
 - `command` indica la tarea a realizar por el daemon, es decir el `run` comando.
 - `options` puede ser cualquier parámetro válido que pueda anular el comportamiento predeterminado del comando, como la `--publish` opción para la asignación de puertos.
 
-Ahora, siguiendo esta sintaxis, el runcomando se puede escribir de la siguiente manera:
+Ahora, siguiendo esta sintaxis, el `run` comando se puede escribir de la siguiente manera:
 
 ```sh
 docker container run <image name>
 ```
 
-`image name` Puede ser cualquier imagen de un registro en línea o de su sistema local . Como ejemplo, puede intentar ejecutar un contenedor utilizando la imagen [hello-world](https://hub.docker.com/_/hello-world) .
+La `image name` puede ser cualquier imagen de un registro en línea o de su sistema local . Como ejemplo, puede intentar ejecutar un contenedor utilizando la imagen [hello-world](https://hub.docker.com/_/hello-world) .
 
 ```sh
 docker container run hello-world
@@ -314,6 +314,13 @@ Ejecute el siguiente comando en su terminal:
 
 ```sh
 docker container run -p 8080:80 fhsinchy/hello-dock
+# /docker-entrypoint.sh: /docker-entrypoint.d/ is not empty, will attempt to perform configuration
+# /docker-entrypoint.sh: Looking for shell scripts in /docker-entrypoint.d/
+# /docker-entrypoint.sh: Launching /docker-entrypoint.d/10-listen-on-ipv6-by-default.sh
+# 10-listen-on-ipv6-by-default.sh: Getting the checksum of /etc/nginx/conf.d/default.conf
+# 10-listen-on-ipv6-by-default.sh: Enabled listen on IPv6 in /etc/nginx/conf.d/default.conf
+# /docker-entrypoint.sh: Launching /docker-entrypoint.d/20-envsubst-on-templates.sh
+# /docker-entrypoint.sh: Configuration complete; ready for start up
 ```
 
 Cuando escribió `-p 8080:80` en la subsección anterior, significaba que cualquier solicitud enviada al puerto 8080 de su sistema host se reenviará al puerto 80 dentro del contenedor‌.
@@ -332,7 +339,7 @@ Puede detener el contenedor simplemente presionando la `ctrl + c` combinación d
 
 Otra opción muy popular del `run` comando es la opción `--detach` o `-d` . En el ejemplo anterior, para que el contenedor siguiera ejecutándose, tenía que mantener abierta la ventana de la terminal. Cerrar la ventana del terminal también detuvo el contenedor en ejecución.
 
-Para anular este comportamiento y mantener un contenedor ejecutándose en segundo plano, puede incluir la `--detach` opción con el `run` comando de la siguiente manera:
+Para anular este comportamiento y mantener un contenedor ejecutándose en segundo plano, puede incluir la `-d` opción con el `run` comando de la siguiente manera:
 
 ```sh
 docker container run -d -p 8080:80 fhsinchy/hello-dock
@@ -361,7 +368,7 @@ El `CONTAINER ID` es `9f21cb777058` que son los primeros 12 caracteres del ID de
 
 En la lista debajo de la `PORTS` columna, el puerto 8080 de su red local apunta hacia el puerto 80 dentro del contenedor. El nombre `gifted_sammet` es generado por Docker y puede ser algo completamente diferente en su computadora.
 
-- Para enumerar los contenedores que se han ejecutado en el pasado, puede usar la opción `--all` o `-a` :
+- **Para enumerar los contenedores que se han ejecutado en el pasado, puede usar la opción `--all` o `-a` :**
 
   ```sh
   docker ps -a
@@ -374,9 +381,7 @@ En la lista debajo de la `PORTS` columna, el puerto 8080 de su red local apunta 
 
   Como puede ver, el segundo contenedor de la lista `reverent_torvalds` se creó anteriormente y salió con el código de estado 0, lo que indica que no se produjo ningún error durante el tiempo de ejecución del contenedor.
 
-  <br>
-
-- Para visualizar el último contenedor que ha realizado una operacion, puede usar la opción `-l` :
+- **Para visualizar el último contenedor que ha realizado una operacion, puede usar la opción `-l` :**
 
   ```sh
   docker ps -l
@@ -384,7 +389,7 @@ En la lista debajo de la `PORTS` columna, el puerto 8080 de su red local apunta 
   62058bf739a1   hello-world   "/hello"   46 minutes ago   Exited (0) 46 minutes ago             vigilant_poitras
   ```
 
-- Para visualizar e los ultimos contenedores que han realizado alguna operacion, ademas se puede especificar la cantidad que se desea mostrar, puede usar la opción `-n` :
+- **Para visualizar e los ultimos contenedores que han realizado alguna operacion, ademas se puede especificar la cantidad que se desea mostrar, puede usar la opción `-n` :**
 
   ```sh
   docker ps -n 4
@@ -397,9 +402,7 @@ En la lista debajo de la `PORTS` columna, el puerto 8080 de su red local apunta 
 
   Mostrar n últimos contenedores creados (incluye todos los estados), en el ejemplo mostrara los ultimos 4 contenedores que hayan realizado alguna operacion.
 
-  <br>
-
-- Para poder ver el tamaño que ocupa un contendor en el sistema, puede usar la opción `-s` :
+- **Para poder ver el tamaño que ocupa un contendor en el sistema, puede usar la opción `-s` :**
 
   ```sh
   CONTAINER ID   IMAGE                        COMMAND                  CREATED      STATUS                          PORTS                      NAMES              SIZE
