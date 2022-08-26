@@ -682,7 +682,7 @@ docker run alpine uname -a
 # Linux f08dbbe9199b 5.8.0-22-gener
 ```
 
-En el bloque de código anterior, ejecuté el `uname -a` para imprimir los detalles del kernel dentro de un contenedor que ejecuta Alpine Linux.
+Ejecuté el `uname -a` para imprimir los detalles del kernel dentro de un contenedor que ejecuta Alpine Linux.
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
