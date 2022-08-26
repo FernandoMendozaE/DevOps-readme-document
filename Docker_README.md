@@ -48,9 +48,10 @@
         <li><a href="#cómo-nombrar-o-cambiar-el-nombre-de-un-contenedor---name-y-rename">Cómo nombrar o cambiar el nombre de un contenedor</a></li>
         <li><a href="#cómo-detener-o-matar-un-contenedor-en-funcionamiento-stop-o-kill">Cómo detener o matar un contenedor en funcionamiento (stop o kill)</a></li>
         <li><a href="#cómo-reiniciar-un-contenedor-start-o-restart">Cómo reiniciar un contenedor (start o restart)</a></li>
-        <li><a href="#"></a></li>
-        <li><a href="#"></a></li>
-        <li><a href="#"></a></li>
+        <li><a href="#cómo-crear-un-contenedor-sin-ejecutar-create-o-start">Cómo crear un contenedor sin ejecutar (create o start)</a></li>
+        <li><a href="#cómo-quitar-contenedores-colgantes-rm-y---rm">Cómo quitar contenedores colgantes (rm y --rm)</a></li>
+        <li><a href="#cómo-ejecutar-un-contenedor-en-modo-interactivo--it">Cómo ejecutar un contenedor en modo interactivo (it)</a></li>
+        <li><a href="#cómo-ejecutar-comandos-dentro-de-un-contenedor">Cómo ejecutar comandos dentro de un contenedor</a></li>
         <li><a href="#"></a></li>
       </ul>
     </li>
@@ -480,13 +481,235 @@ La principal diferencia entre los dos comandos es que el `container restart` com
 En el caso de un contenedor detenido, ambos comandos son exactamente iguales. Pero en el caso de un contenedor en ejecución, debe usar el `container restart` comando.
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
+
+## Cómo crear un contenedor sin ejecutar (create o start)
+
+Hasta ahora en esta sección, ha iniciado contenedores usando el `container run` comando que en realidad es una combinación de dos comandos separados. Estos comandos son los siguientes:
+
+- `container create` El comando crea un contenedor a partir de una imagen determinada.
+- `container start` El comando inicia un contenedor que ya se ha creado.
+
+Usando estos dos comandos, puede hacer algo como lo siguiente:
+
+```sh
+docker container create -p 8080:80 fhsinchy/hello-dock
+
+# 2e7ef5098bab92f4536eb9a372d9b99ed852a9a816c341127399f51a6d053856
+
+docker container ls --all
+
+# CONTAINER ID        IMAGE                 COMMAND                  CREATED             STATUS              PORTS               NAMES
+# 2e7ef5098bab        fhsinchy/hello-dock   "/docker-entrypoint.…"   30 seconds ago      Created                                 hello-dock
+```
+
+Evidentemente por la salida del `container ls --all` comando, `hello-dock` se ha creado un contenedor con el nombre de usando la `fhsinchy/hello-dock` imagen. El `STATUS` del contenedor es `Created` en este momento y, dado que no se está ejecutando, no aparecerá en la lista sin el uso de la `--all` opción.
+
+Una vez que se ha creado el contenedor, se puede iniciar con el `container start` comando.
+
+```sh
+docker container start hello-dock
+
+# hello-dock
+
+docker container ls
+
+# CONTAINER ID        IMAGE                 COMMAND                  CREATED              STATUS              PORTS                  NAMES
+# 2e7ef5098bab        fhsinchy/hello-dock   "/docker-entrypoint.…"   About a minute ago   Up 29 seconds       0.0.0.0:8080->80/tcp   hello-dock
+```
+
+El contenedor `STATUS` ha cambiado de `Created` a `Up 29 seconds` , lo que indica que el contenedor ahora está en estado de ejecución.
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
+## Cómo quitar contenedores colgantes (rm y --rm)
+
+Estos contenedores colgantes pueden ocupar espacio o pueden entrar en conflicto con los contenedores más nuevos.
+
+Para eliminar un contenedor detenido, puede usar el `container rm` comando. La sintaxis genérica es la siguiente:
+
+```sh
+docker container rm <container identifier>
+```
+
+- **Eliminar contenedores colgantes**
+  También puede eliminar varios contenedores a la vez pasando sus identificadores uno tras otro separados por espacios.
+
+  O, en lugar de eliminar contenedores individuales, si desea eliminar todos los contenedores colgantes de una sola vez, puede usar el `container prune` comando.
+
+  ```sh
+  docker container prune
+  ```
+
+- **Eliminar todos los contenedores terminados**
+
+  Puede localizar contenedores utilizando `docker ps -a` y filtrarlos según su estado: “created”, “restarting”, “running”, “paused” o “exited”. A fin de revisar la lista de contenedores terminados, utilice el indicador `-f` para filtrar según el estado. Cuando haya verificado que desea eliminar esos contenedores, utilice -q para pasar los IDs al comando `docker rm` .
+
+  Enumerar:
+
+  ```sh
+  docker ps -a -f status=exited
+  ```
+
+  Eliminar:
+
+  ```sh
+  docker rm $(docker ps -a -f status=exited -q)
+  ```
+
+- **Eliminar contenedores utilizando más de un filtro**
+  Los filtros de Docker pueden combinarse repitiendo el indicador de filtro con un valor adicional. Esto da como resultado una lista de contenedores que cumplen cualquier condición. Por ejemplo, si desea eliminar todos los contenedores marcados como `Created` (un estado que se puede generar cuando ejecuta un contenedor con un comando no válido) o `Exited`, puede utilizar dos filtros:
+
+  Enumerar:
+
+  ```sh
+  docker ps -a -f status=exited -f status=created
+  ```
+
+  Eliminar:
+
+  ```sh
+  docker rm $(docker ps -a -f status=exited -f status=created -q)
+  ```
+
+- **Detener y eliminar todos los contenedores**
+  Puede revisar los contenedores de su sistema con `docker ps`. Al añadir el indicador `-a` se mostrarán todos los contenedores. Cuando esté seguro de que desea eliminarlos, puede añadir el indicador `-q` para proporcionar los ID a los comandos `docker stop` y `docker rm` :
+
+  Enumerar:
+
+  ```sh
+  docker ps -a
+  ```
+
+  Eliminar:
+
+  ```sh
+  docker stop $(docker ps -a -q)
+  docker rm $(docker ps -a -q)
+  ```
+
+- **Eliminar un contenedor al cerrarlo**
+  Si al crear un contenedor sabe que no querrá conservarlo una vez que lo termine, puede ejecutar `docker run --rm` para eliminarlo automáticamente después de cerrarlo.
+
+  Ejecutar y eliminar:
+
+  ```sh
+  docker run --rm image_name
+  ```
+
+  Ejecute el siguiente ejemplo:
+
+  ```sh
+  docker container run --rm --detach --publish 8888:80 --name hello-dock-volatile fhsinchy/hello-dock
+
+  # 0d74e14091dc6262732bee226d95702c21894678efb4043663f7911c53fb79f3
+  ```
+
+  Puede usar el container lscomando para verificar que el contenedor se está ejecutando:
+
+  ```sh
+  docker container ls
+
+  # CONTAINER ID   IMAGE                 COMMAND                  CREATED              STATUS              PORTS                  NAMES
+  # 0d74e14091dc   fhsinchy/hello-dock   "/docker-entrypoint.…"   About a minute ago   Up About a minute   0.0.0.0:8888->80/tcp   hello-dock-volatile
+  ```
+
+  Ahora, si detiene el contenedor y luego verifica nuevamente con el container ls --allcomando:
+
+  ```sh
+  docker container stop hello-dock-volatile
+
+  # hello-dock-volatile
+
+  docker container ls --all
+
+  # CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
+  ```
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
+## Cómo ejecutar un contenedor en modo interactivo (-it)
+
+Las distribuciones populares como Ubuntu , Fedora y Debian tienen imágenes oficiales de Docker disponibles en el hub. Los lenguajes de programación como python , php , go o tiempos de ejecución como node y deno tienen sus imágenes oficiales.
+
+Estas imágenes no solo ejecutan algún programa preconfigurado. En cambio, estos están configurados para ejecutar un shell de forma predeterminada. En el caso de las imágenes del sistema operativo, puede ser algo como `sh` o `bash` y en el caso de los lenguajes de programación o los tiempos de ejecución, suele ser su shell de idioma predeterminado.
+
+Como ya habrá aprendido de sus experiencias previas con las computadoras, los shells son programas interactivos. Una imagen configurada para ejecutar dicho programa es una imagen interactiva. Estas imágenes requieren `-it` que se pase una opción especial en el `container run` comando.
+
+Como ejemplo, si ejecuta un contenedor usando la `ubuntu` imagen mediante la ejecución docker container run ubuntu, verá que no sucede nada. Pero si ejecuta el mismo comando con la `-it` opción, debería aterrizar directamente en bash dentro del contenedor de Ubuntu.
+
+```sh
+docker container run --rm -it ubuntu
+
+# root@dbb1f56b9563:/# cat /etc/os-release
+# NAME="Ubuntu"
+# VERSION="20.04.1 LTS (Focal Fossa)"
+# ID=ubuntu
+# ID_LIKE=debian
+# PRETTY_NAME="Ubuntu 20.04.1 LTS"
+# VERSION_ID="20.04"
+# HOME_URL="https://www.ubuntu.com/"
+# SUPPORT_URL="https://help.ubuntu.com/"
+# BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+# PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+# VERSION_CODENAME=focal
+# UBUNTU_CODENAME=focal
+```
+
+Como puede ver en la salida del `cat /etc/os-release` comando, de hecho estoy interactuando con el bash que se ejecuta dentro del contenedor de Ubuntu.
+
+La `-it` opción prepara el escenario para que interactúes con cualquier programa interactivo dentro de un contenedor. Esta opción es en realidad dos opciones separadas combinadas.
+
+- La opción `-i` o `--interactive` lo conecta con el flujo de entrada del contenedor, para que pueda enviar entradas a bash.
+- La opción `-t` o `--tty` se asegura de que obtenga un buen formato y una experiencia similar a la de un terminal nativo mediante la asignación de un pseudo-tty.
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
+## Cómo ejecutar comandos dentro de un contenedor
+
+La sintaxis genérica para pasar un comando a un contenedor que no se está ejecutando es la siguiente:
+
+```sh
+docker container run <image name> <command>
+```
+
+Ejecute el siguiente comando en su terminal:
+
+```sh
+docker run alpine uname -a
+# Linux f08dbbe9199b 5.8.0-22-gener
+```
+
+En este comando, he ejecutado el `uname -a` comando dentro de un contenedor Alpine Linux. Escenarios como este (donde todo lo que quieres hacer es ejecutar un determinado comando dentro de un determinado contenedor).
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
 ```sh
 
-````
+```
 
 ```sh
 
-````
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
 
 ```sh
 
