@@ -720,11 +720,11 @@ Antes de que podamos ejecutar la aplicación, necesitamos obtener el código fue
 
 1. Descargue el contenido de la aplicación desde el [repositorio de inicio](https://github.com/docker/getting-started/tree/master) .
 
-2. Una vez extraído diríjase a la carpeta app, use su editor de código favorito para abrir el proyecto. Si necesita un editor, puede usar Visual Studio Code . Debería ver los `package.json` dos subdirectorios `( srcy spec)` .
+2. Una vez extraído diríjase a la carpeta app, use su editor de código favorito para abrir el proyecto. Si necesita un editor, puede usar Visual Studio Code . Debería ver los `package.json` dos subdirectorios (`src` y `spec`).
 
 #### Crea la imagen del contenedor de la aplicación
 
-Para construir la aplicación, necesitamos usar un archivo Dockerfile. Un Dockerfile es simplemente un script de instrucciones basado en texto que se usa para crear una imagen de contenedor. Si ha creado Dockerfiles antes, es posible que vea algunas fallas en el Dockerfile a continuación. Pero no te preocupes. Los repasamos.
+Para construir la aplicación, necesitamos usar un archivo Dockerfile. Un Dockerfile es simplemente un script de instrucciones basado en texto que se usa para crear una imagen de contenedor.
 
 1. Cree un archivo con el nombre `Dockerfile` en la misma carpeta que el archivo `package.json` con los siguientes contenidos.
 
@@ -770,7 +770,7 @@ Para construir la aplicación, necesitamos usar un archivo Dockerfile. Un Docker
 
    Este comando usó Dockerfile para crear una nueva imagen de contenedor. Es posible que haya notado que se descargaron muchas "capas". Esto se debe a que le indicamos al constructor que queríamos comenzar desde la `node:12-alpine` imagen. Pero, como no teníamos eso en nuestra máquina, esa imagen necesitaba ser descargada.
 
-   Después de descargar la imagen, la copiamos en nuestra aplicación y la usamos `yarn` para instalar las dependencias de nuestra aplicación. La `CMD`directiva especifica el comando predeterminado que se ejecutará al iniciar un contenedor desde esta imagen.
+   Después de descargar la imagen, la copiamos en nuestra aplicación y usamos `yarn` para instalar las dependencias de nuestra aplicación. La `CMD`directiva especifica el comando predeterminado que se ejecutará al iniciar un contenedor desde esta imagen.
 
    Finalmente, la **`-t`** bandera etiqueta nuestra imagen. Piense en esto simplemente como un nombre legible por humanos para la imagen final. Dado que nombramos la imagen `getting-started` , podemos hacer referencia a esa imagen cuando ejecutamos un contenedor.
 
@@ -786,7 +786,7 @@ Ahora que tenemos una imagen, ejecutemos la aplicación. Para hacerlo, usaremos 
    docker run -dp 3000:3000 getting-started
    ```
 
-¿Recuerdas las banderas `-d` y ? `-p` estamos ejecutando el nuevo contenedor en modo "separado" (en segundo plano) y creando una asignación entre el puerto 3000 del host y el puerto 3000 del contenedor. Sin la asignación de puertos, no podríamos acceder a la aplicación.
+¿Recuerdas las banderas `-d` y `-p` ? estamos ejecutando el nuevo contenedor en modo "separado" (en segundo plano) y creando una asignación entre el puerto 3000 del host y el puerto 3000 del contenedor. Sin la asignación de puertos, no podríamos acceder a la aplicación.
 
 2. Después de unos segundos, abra su navegador web en http://localhost:3000 . Deberías ver nuestra aplicación.
 
@@ -806,12 +806,12 @@ La sintaxis genérica para la opción es la siguiente:
 --tag <image repository>:<image tag>
 ```
 
-Tome la imagen mysql oficial , por ejemplo. Si desea ejecutar un contenedor con una versión específica de MySQL, como 5.7, puede ejecutar `docker container run mysql:5.7` donde `mysql` es la imagen del repositorio y `5.7` es el tag.
+Tome la imagen `mysql` oficial, por ejemplo. Si desea ejecutar un contenedor con una versión específica de MySQL, como 5.7, puede ejecutar `docker container run mysql:5.7` donde `mysql` es la imagen del repositorio y `5.7` es el tag.
 
 Usaremos el anterior ejemplo para un mejor entendimiento, para etiquetar su imagen `getting-started` puede ejecutar el siguiente comando:
 
 ```sh
-docker image build -t getting-started:packaded .
+docker image build -t getting-started:v1.0 .
 # [+] Building 13.5s (16/16) FINISHED
 #  => [internal] load build definition from Dockerfile                                                               0.0s
 #  => => transferring dockerfile: 227B                                                                               0.0s
@@ -889,7 +889,7 @@ docker image rm <image identifier>
 
 - **Eliminar imágenes pendientes**
 
-  Las imágenes de Docker constan de varias capas. Las imágenes pendientes son capas que no tienen relación con imágenes etiquetadas. Ya no sirven para nada y ocupan espacio en el disco. Se pueden ubicar añadiendo el indicador de filtro `-f` junto con el valor `dangling=true` al comando `docker images` . Si está seguro de que quiere eliminarlas, puede utilizar el comando` docker images purge` :
+  Las imágenes de Docker constan de varias capas. Las imágenes pendientes son capas que no tienen relación con imágenes etiquetadas. Ya no sirven para nada y ocupan espacio en el disco. Se pueden ubicar añadiendo el indicador de filtro `-f` junto con el valor `dangling=true` al comando `docker images` . Si está seguro de que quiere eliminarlas, puede utilizar el comando` docker image prune` :
 
   Enumerar:
 
@@ -900,8 +900,10 @@ docker image rm <image identifier>
   Eliminar:
 
   ```sh
-  docker images purge
+  docker image prune -f
   ```
+
+  La opción `--force` o `-f` salta cualquier pregunta de confirmación. También puede usar la opción `--all` o `-a`para eliminar todas las imágenes almacenadas en caché en su registro local.
 
 - **Eliminar todas las imágenes**
 
@@ -946,7 +948,7 @@ ADD https://nginx.org/download/${FILENAME}.${EXTENSION} .
 RUN apk add --no-cache pcre zlib && \
     apk add --no-cache \
             --virtual .build-deps \
-            build-base \
+              build-base \
             pcre-dev \
             zlib-dev \
             openssl-dev && \
@@ -971,7 +973,7 @@ CMD ["nginx", "-g", "daemon off;"]
 - La `--virtual` opción para el `apk add` comando se usa para agrupar un grupo de paquetes en un solo paquete virtual para facilitar la administración. Los paquetes que se necesitan solo para construir el programa se etiquetan y `.build-deps` luego se eliminan en la línea 29 al ejecutar el `apk del .build-deps` comando. Puede obtener más información sobre los virtuales en los documentos oficiales.
 - Los nombres de los paquetes son un poco diferentes aquí. Por lo general, cada distribución de Linux tiene su repositorio de paquetes disponible para todos donde puede buscar paquetes. Si conoce los paquetes necesarios para una determinada tarea, puede dirigirse al repositorio designado para una distribución y buscarlo. [Puede buscar paquetes de Alpine Linux aquí](https://pkgs.alpinelinux.org/packages).
 
-Ahora cree una nueva imagen usando esto `Dockerfile` y vea la diferencia en el tamaño del archivo:
+Ahora cree una nueva imagen usando las configuraciones del `Dockerfile` creado.
 
 ```sh
 docker image build --tag custom-nginx:built .
@@ -1090,7 +1092,7 @@ docker image build --tag fhsinchy/custom-nginx:latest .
 # Successfully tagged fhsinchy/custom-nginx:latest
 ```
 
-En este comando, el f`hsinchy/custom-nginx` es el repositorio de imágenes y `latesct` es la etiqueta. El nombre de la imagen puede ser el que quieras y no se puede cambiar una vez que hayas subido la imagen. La etiqueta se puede cambiar cuando lo desee y, por lo general, refleja la versión del software o diferentes tipos de compilaciones.
+En este comando, el `fhsinchy/custom-nginx` es el repositorio de imágenes y `latesct` es la etiqueta. El nombre de la imagen puede ser el que quieras y no se puede cambiar una vez que hayas subido la imagen. La etiqueta se puede cambiar cuando lo desee y, por lo general, refleja la versión del software o diferentes tipos de compilaciones.
 
 Toma la `node` imagen como ejemplo. La `node:lts` imagen se refiere a la versión de soporte a largo plazo de Node.js, mientras que la `node:lts-alpine` versión se refiere a la versión de Node.js creada para Alpine Linux, que es mucho más pequeña que la normal.
 
