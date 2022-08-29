@@ -65,6 +65,20 @@
         <li><a href="#cómo-compartir-sus-imágenes-de-docker-en-línea">Cómo compartir sus imágenes de Docker en línea</a></li>
       </ul>
     </li>
+    <li>
+      <a href='#cómo-convertir-en-contenedor-una-aplicación-de-javascript'>Cómo convertir en contenedor una aplicación de JavaScript</a>
+      <ul>
+        <li><a href="#cómo-escribir-el-dockerfile-de-desarrollo">Cómo escribir el Dockerfile de desarrollo</a></li>
+        <li><a href="#cómo-trabajar-con-montajes-de-enlace-en-docker">Cómo trabajar con montajes de enlace en Docker</a></li>
+        <li><a href="#cómo-trabajar-con-volúmenes-anónimos-en-docker">Cómo trabajar con volúmenes anónimos en Docker</a></li>
+        <li><a href="#"></a></li>
+        <li><a href="#"></a></li>
+        <li><a href="#"></a></li>
+        <li><a href="#"></a></li>
+        <li><a href="#"></a></li>
+        <li><a href="#"></a></li>
+      </ul>
+    </li>
     <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
@@ -1092,7 +1106,7 @@ docker image build --tag fhsinchy/custom-nginx:latest .
 # Successfully tagged fhsinchy/custom-nginx:latest
 ```
 
-En este comando, el `fhsinchy/custom-nginx` es el repositorio de imágenes y `latesct` es la etiqueta. El nombre de la imagen puede ser el que quieras y no se puede cambiar una vez que hayas subido la imagen. La etiqueta se puede cambiar cuando lo desee y, por lo general, refleja la versión del software o diferentes tipos de compilaciones.
+En este comando, el `fhsinchy/custom-nginx` es el repositorio de imágenes y `latest` es la etiqueta. El nombre de la imagen puede ser el que quieras y no se puede cambiar una vez que hayas subido la imagen. La etiqueta se puede cambiar cuando lo desee y, por lo general, refleja la versión del software o diferentes tipos de compilaciones.
 
 Toma la `node` imagen como ejemplo. La `node:lts` imagen se refiere a la versión de soporte a largo plazo de Node.js, mientras que la `node:lts-alpine` versión se refiere a la versión de Node.js creada para Alpine Linux, que es mucho más pequeña que la normal.
 
@@ -1124,33 +1138,170 @@ Dependiendo del tamaño de la imagen, la carga puede demorar algún tiempo. Una 
 
   <p align="right">(<a href="#top">volver arriba</a>)</p>
 
-```sh
+## Cómo convertir en contenedor una aplicación de JavaScript
 
-```
+En esta subsección, trabajará con el código fuente del [repositorio](https://github.com/fhsinchy/docker-handbook-projects). En el proceso de contenedorización de esta aplicación muy simple, se le presentarán los volúmenes y las compilaciones de varias etapas, dos de los conceptos más importantes de Docker.
 
-```sh
+<p align="right">(<a href="#top">volver arriba</a>)</p>
 
-```
+### Cómo escribir el Dockerfile de desarrollo
 
-```sh
+Para empezar, abra el directorio donde ha clonado el repositorio que viene con este libro. El código de la `hello-dock` aplicación reside dentro del subdirectorio, este es un proyecto de JavaScript muy simple impulsado por el proyecto vitejs/vite .
 
-```
-
-```sh
-
-```
+Acontinuación cree una nueva `Dockerfile.dev` dentro `hello-dock` del directorio de su proyecto y coloque el siguiente contenido en él:
 
 ```sh
+FROM node:lts-alpine
 
+EXPOSE 3000
+
+USER node
+
+RUN mkdir -p /home/node/app
+
+WORKDIR /home/node/app
+
+COPY ./package.json .
+RUN npm install
+
+COPY . .
+
+CMD [ "npm", "run", "dev" ]
 ```
+
+La explicación de este código es la siguiente:
+
+- Las `FROM` instrucciones aquí establecen la imagen oficial de Node.js como base, brindándole todas las bondades de Node.js necesarias para ejecutar cualquier aplicación de JavaScript. La `lts-alpine` etiqueta indica que desea utilizar la variante Alpine, versión de soporte a largo plazo de la imagen. Las etiquetas disponibles y la documentación necesaria para la imagen se pueden encontrar en la página del centro de [nodos](https://hub.docker.com/_/node) .
+
+- La `USER` instrucción establece el usuario predeterminado para la imagen en `node`. De forma predeterminada, Docker ejecuta contenedores como usuario raíz. Pero según las [mejores prácticas de Docker y Node.js](https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md), esto puede representar una amenaza para la seguridad. Por lo tanto, es una mejor idea ejecutar como usuario no root siempre que sea posible. La imagen del nodo viene con un nombre de usuario no raíz `node` que puede establecer como el usuario predeterminado usando la `USER` instrucción.
+
+- La `RUN mkdir -p /home/node/app` instrucción crea un directorio llamado `app` dentro del directorio de inicio del `node` usuario. El directorio de inicio para cualquier usuario que no sea root en Linux suele ser `/home/<user name>` el predeterminado.
+
+- Luego, la `WORKDIR` instrucción establece el directorio de trabajo predeterminado en el directorio recién creado `/home/node/app` . Por defecto, el directorio de trabajo de cualquier imagen es la raíz. No desea que se rocíen archivos innecesarios en todo su directorio raíz, ¿verdad? Por lo tanto, cambia el directorio de trabajo predeterminado a algo más sensato `/home/node/app` o lo que quiera. Este directorio de trabajo será aplicable a cualquier instrucción , `COPY` y `ADD` .
+
+- La `COPY` instrucción aquí copia el `package.json` archivo que contiene información sobre todas las dependencias necesarias para esta aplicación. La `RUN` instrucción ejecuta el `npm install` comando, que es el comando predeterminado para instalar dependencias mediante un `package.json` archivo en los proyectos de Node.js. El `.` al final representa el directorio de trabajo.
+
+- La segunda `COPY` instrucción copia el resto del contenido del directorio actual ( `.` ) del sistema de archivos host al directorio de trabajo ( `.` ) dentro de la imagen.
+
+- Finalmente, la `CMD` instrucción aquí establece el comando predeterminado para esta imagen que está `npm run dev` escrita en `exec` forma.
+
+- El `vite` servidor de desarrollo se ejecuta de forma predeterminada en el puerto `3000` , y agregar un `EXPOSE` comando parecía una buena idea, así que ya está.
+
+Ahora, para construir una imagen a partir de esto `Dockerfile.dev` , puede ejecutar el siguiente comando:
 
 ```sh
+docker image build --file Dockerfile.dev --tag hello-dock:dev .
 
+# Step 1/7 : FROM node:lts
+#  ---> b90fa0d7cbd1
+# Step 2/7 : EXPOSE 3000
+#  ---> Running in 722d639badc7
+# Removing intermediate container 722d639badc7
+#  ---> e2a8aa88790e
+# Step 3/7 : WORKDIR /app
+#  ---> Running in 998e254b4d22
+# Removing intermediate container 998e254b4d22
+#  ---> 6bd4c42892a4
+# Step 4/7 : COPY ./package.json .
+#  ---> 24fc5164a1dc
+# Step 5/7 : RUN npm install
+#  ---> Running in 23b4de3f930b
+### LONG INSTALLATION STUFF GOES HERE ###
+# Removing intermediate container 23b4de3f930b
+#  ---> c17ecb19a210
+# Step 6/7 : COPY . .
+#  ---> afb6d9a1bc76
+# Step 7/7 : CMD [ "npm", "run", "dev" ]
+#  ---> Running in a7ff529c28fe
+# Removing intermediate container a7ff529c28fe
+#  ---> 1792250adb79
+# Successfully built 1792250adb79
+# Successfully tagged hello-dock:dev
 ```
+
+Dado que el nombre del archivo no es `Dockerfile`, debe pasar explícitamente el nombre del archivo usando la `--file` opción. Se puede ejecutar un contenedor usando esta imagen ejecutando el siguiente comando:
 
 ```sh
+docker container run --rm -dp 3000:3000 --name hello-dock-dev hello-dock:dev
 
+# 21b9b1499d195d85e81f0e8bce08f43a64b63d589c5f15cbbd0b9c0cb07ae268
 ```
+
+Ahora visite http://127.0.0.1:3000 para ver la `hello-dock` aplicación en acción.
+
+<div align="center"> 
+  <img src="https://www.freecodecamp.org/news/content/images/size/w1600/2021/01/hello-dock-dev.png" alt="screenshot"/>
+</div>
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
+### Cómo trabajar con montajes de enlace en Docker
+
+Si ha trabajado anteriormente con algún marco de JavaScript front-end, debe saber que los servidores de desarrollo en estos marcos generalmente vienen con una función de recarga en caliente. Es decir, si realiza un cambio en su código, el servidor se volverá a cargar, reflejando automáticamente cualquier cambio que haya realizado de inmediato.
+
+Pero si realiza algún cambio en su código en este momento, no verá que su aplicación se ejecute en el navegador. Esto se debe a que está realizando cambios en el código que tiene en su sistema de archivos local, pero la aplicación que está viendo en el navegador reside dentro del sistema de archivos del contenedor.
+
+<div align="center"> 
+  <img src="https://www.freecodecamp.org/news/content/images/2021/01/local-vs-container-file-system.svg" alt="screenshot"/>
+</div>
+
+Para resolver este problema, puede volver a utilizar un montaje de enlace . Con los montajes de enlace, puede montar fácilmente uno de los directorios de su sistema de archivos local dentro de un contenedor. En lugar de hacer una copia del sistema de archivos local, el montaje de enlace puede hacer referencia al sistema de archivos local directamente desde el interior del contenedor.
+
+<div align="center"> 
+  <img src="https://www.freecodecamp.org/news/content/images/2021/01/bind-mounts.svg" alt="screenshot"/>
+</div>
+
+De esta manera, cualquier cambio que realice en su código fuente local se reflejará inmediatamente dentro del contenedor, activando la función de recarga en caliente del `vite` servidor de desarrollo. Los cambios realizados en el sistema de archivos dentro del contenedor también se reflejarán en su sistema de archivos local.
+
+Los montajes de enlace se pueden crear usando la opción `--volume` o `-v` para los comandos `conatiner run` o `container start`. Solo para recordarle, la sintaxis genérica es la siguiente:
+
+```sh
+--volume <local file system directory absolute path>:<container file system directory absolute path>:<read write access>
+```
+
+Detenga su `hello-dock-dev` contenedor previamente iniciado e inicie un nuevo contenedor ejecutando el siguiente comando:
+
+```sh
+docker container run --rm -p 3000:3000 --name hello-dock-dev --volume $(pwd):/home/node/app hello-dock:dev
+
+# sh: 1: vite: not found
+# npm ERR! code ELIFECYCLE
+# npm ERR! syscall spawn
+# npm ERR! file sh
+# npm ERR! errno ENOENT
+# npm ERR! hello-dock@0.0.0 dev: `vite`
+# npm ERR! spawn ENOENT
+# npm ERR!
+# npm ERR! Failed at the hello-dock@0.0.0 dev script.
+# npm ERR! This is probably not a problem with npm. There is likely additional logging output above.
+# npm WARN Local package.json exists, but node_modules missing, did you mean to install?
+```
+
+Tenga en cuenta que `$(pwd) en linux` o `${PWD} en windows` almacena la ruta del directorio actual. Como puede ver, la aplicación no se está ejecutando en absoluto ahora.
+
+Eso es porque aunque el uso de un volumen resuelve el problema de las recargas en caliente, presenta otro problema. Si tiene alguna experiencia previa con Node.js, puede saber que las dependencias de un proyecto de Node.js viven dentro del `node_modules` directorio en la raíz del proyecto.
+
+Ahora que está montando la raíz del proyecto en su sistema de archivos local como un volumen dentro del contenedor, el contenido dentro del contenedor se reemplaza junto con el `node_modules` directorio que contiene todas las dependencias. Esto significa que el `vite` paquete ha desaparecido.
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
+### Cómo trabajar con volúmenes anónimos en Docker
+
+Este problema se puede resolver utilizando un volumen anónimo. Un volumen anónimo es idéntico a un montaje de enlace, excepto que no necesita especificar el directorio de origen aquí. La sintaxis genérica para crear un volumen anónimo es la siguiente:
+
+```sh
+--volume <container file system directory absolute path>:<read write access>
+```
+
+Entonces, el comando final para iniciar el `hello-dock` contenedor con ambos volúmenes debería ser el siguiente:
+
+```sh
+docker container run --rm -dp 3000:3000 --name hello-dock-dev -v $(pwd):/home/node/app -v /home/node/a node_modules hello-dock:dev
+
+# 53d1cfdb3ef148eb6370e338749836160f75f076d0fbec3c2a9b059a8992de8b
+```
+
+Aquí, Docker tomará todo el `node_modules` directorio desde el interior del contenedor y lo guardará en algún otro directorio administrado por el demonio de Docker en su sistema de archivos host y montará ese directorio como `node_modules` dentro del contenedor.
 
 ```sh
 
@@ -1321,6 +1472,7 @@ Dependiendo del tamaño de la imagen, la carga puede demorar algún tiempo. Una 
 ```
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
+
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
 <!-- MARKDOWN LINKS & IMAGES -->
