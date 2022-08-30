@@ -71,8 +71,8 @@
         <li><a href="#cómo-escribir-el-dockerfile-de-desarrollo">Cómo escribir el Dockerfile de desarrollo</a></li>
         <li><a href="#cómo-trabajar-con-montajes-de-enlace-en-docker">Cómo trabajar con montajes de enlace en Docker</a></li>
         <li><a href="#cómo-trabajar-con-volúmenes-anónimos-en-docker">Cómo trabajar con volúmenes anónimos en Docker</a></li>
-        <li><a href="#"></a></li>
-        <li><a href="#"></a></li>
+        <li><a href="#cómo-realizar-compilaciones-de-varias-etapas-en-docker">Cómo realizar compilaciones de varias etapas en Docker</a></li>
+        <li><a href="#cómo-ignorar-archivos-innecesarios">Cómo ignorar archivos innecesarios</a></li>
         <li><a href="#"></a></li>
         <li><a href="#"></a></li>
         <li><a href="#"></a></li>
@@ -1303,21 +1303,158 @@ docker container run --rm -dp 3000:3000 --name hello-dock-dev -v $(pwd):/home/no
 
 Aquí, Docker tomará todo el `node_modules` directorio desde el interior del contenedor y lo guardará en algún otro directorio administrado por el demonio de Docker en su sistema de archivos host y montará ese directorio como `node_modules` dentro del contenedor.
 
-```sh
+<p align="right">(<a href="#top">volver arriba</a>)</p>
 
+### Cómo realizar compilaciones de varias etapas en Docker
+
+Si desea construir la imagen en modo de producción, aparecen algunos desafíos nuevos.
+
+En el modo de desarrollo, el `npm run serve` comando inicia un servidor de desarrollo que sirve la aplicación al usuario. Ese servidor no solo sirve los archivos, sino que también proporciona la función de recarga en caliente.
+
+En el modo de producción, el `npm run build` comando compila todo su código JavaScript en algunos archivos HTML, CSS y JavaScript estáticos. Para ejecutar estos archivos, no necesita node ni ninguna otra dependencia de tiempo de ejecución. Todo lo que necesitas es un servidor como `nginx` por ejemplo.
+
+Para crear una imagen donde la aplicación se ejecuta en modo de producción, puede seguir los siguientes pasos:
+
+- Use `node` como imagen base y cree la aplicación.
+- Instále `nginx` dentro de la imagen del node y utilícelo para servir los archivos estáticos.
+- Cree la imagen final basada en `nginx` y descarte todo `node` lo relacionado.
+
+De esta manera, su imagen solo contiene los archivos que se necesitan y se vuelve realmente útil.
+
+Este enfoque es una construcción de varias etapas. Para realizar una compilación de este tipo, cree una nueva `Dockerfile` dentro `hello-dock` del directorio de su proyecto y coloque el siguiente contenido en él:
+
+```sh
+FROM node:lts-alpine as builder
+
+WORKDIR /app
+
+COPY ./package.json ./
+RUN npm install
+
+COPY . .
+RUN npm run build
+
+FROM nginx:stable-alpine
+
+EXPOSE 80
+
+COPY --from=builder /app/dist /usr/share/nginx/html
 ```
 
-```sh
+Como puede ver, se `Dockerfile` parece mucho a los anteriores con algunas rarezas. La explicación de este archivo es la siguiente:
 
+- La línea 1 inicia la primera etapa de la compilación utilizando `node:lts-alpine` como imagen base. La as `builder` sintaxis asigna un nombre a esta etapa para que se pueda hacer referencia a ella más adelante.
+- Desde la línea 3 hasta la línea 9, son cosas estándar que has visto muchas veces antes. El R`UN npm run build` comando en realidad compila toda la aplicación y la mete dentro del `/app/dist` directorio donde `/app` está el directorio de trabajo y `/dist` es el directorio de salida predeterminado para `vite` las aplicaciones.
+- La línea 11 inicia la segunda etapa de la construcción utilizando `nginx:stable-alpine` como imagen base.
+- El servidor NGINX se ejecuta en el puerto 80 de forma predeterminada, por lo que `EXPOSE 80` se agrega la línea.
+- La última línea es una `COPY` instrucción. La `--from=builder` parte indica que desea copiar algunos archivos del `builder` escenario. Después de eso, es una instrucción de copia estándar donde `/app/dist` está la fuente y /`usr/share/nginx/html` el destino. El destino utilizado aquí es la ruta del sitio predeterminado para NGINX, por lo que cualquier archivo estático que coloque allí se entregará automáticamente.
+
+Como puede ver, la imagen resultante es una `nginx` imagen base que contiene solo los archivos necesarios para ejecutar la aplicación. Para construir esta imagen, ejecute el siguiente comando:
+
+```sh
+docker image build --tag hello-dock:prod .
+
+# Step 1/9 : FROM node:lts-alpine as builder
+#  ---> 72aaced1868f
+# Step 2/9 : WORKDIR /app
+#  ---> Running in e361c5c866dd
+# Removing intermediate container e361c5c866dd
+#  ---> 241b4b97b34c
+# Step 3/9 : COPY ./package.json ./
+#  ---> 6c594c5d2300
+# Step 4/9 : RUN npm install
+#  ---> Running in 6dfabf0ee9f8
+# npm WARN deprecated fsevents@2.1.3: Please update to v 2.2.x
+#
+# > esbuild@0.8.29 postinstall /app/node_modules/esbuild
+# > node install.js
+#
+# npm notice created a lockfile as package-lock.json. You should commit this file.
+# npm WARN optional SKIPPING OPTIONAL DEPENDENCY: fsevents@~2.1.2 (node_modules/chokidar/node_modules/fsevents):
+# npm WARN notsup SKIPPING OPTIONAL DEPENDENCY: Unsupported platform for fsevents@2.1.3: wanted {"os":"darwin","arch":"any"} (current: {"os":"linux","arch":"x64"})
+# npm WARN hello-dock@0.0.0 No description
+# npm WARN hello-dock@0.0.0 No repository field.
+# npm WARN hello-dock@0.0.0 No license field.
+#
+# added 327 packages from 301 contributors and audited 329 packages in 35.971s
+#
+# 26 packages are looking for funding
+#   run `npm fund` for details
+#
+# found 0 vulnerabilities
+#
+# Removing intermediate container 6dfabf0ee9f8
+#  ---> 21fd1b065314
+# Step 5/9 : COPY . .
+#  ---> 43243f95bff7
+# Step 6/9 : RUN npm run build
+#  ---> Running in 4d918cf18584
+#
+# > hello-dock@0.0.0 build /app
+# > vite build
+#
+# - Building production bundle...
+#
+# [write] dist/index.html 0.39kb, brotli: 0.15kb
+# [write] dist/_assets/docker-handbook-github.3adb4865.webp 12.32kb
+# [write] dist/_assets/index.eabcae90.js 42.56kb, brotli: 15.40kb
+# [write] dist/_assets/style.0637ccc5.css 0.16kb, brotli: 0.10kb
+# - Building production bundle...
+#
+# Build completed in 1.71s.
+#
+# Removing intermediate container 4d918cf18584
+#  ---> 187fb3e82d0d
+# Step 7/9 : EXPOSE 80
+#  ---> Running in b3aab5cf5975
+# Removing intermediate container b3aab5cf5975
+#  ---> d6fcc058cfda
+# Step 8/9 : FROM nginx:stable-alpine
+# stable: Pulling from library/nginx
+# 6ec7b7d162b2: Already exists
+# 43876acb2da3: Pull complete
+# 7a79edd1e27b: Pull complete
+# eea03077c87e: Pull complete
+# eba7631b45c5: Pull complete
+# Digest: sha256:2eea9f5d6fff078ad6cc6c961ab11b8314efd91fb8480b5d054c7057a619e0c3
+# Status: Downloaded newer image for nginx:stable
+#  ---> 05f64a802c26
+# Step 9/9 : COPY --from=builder /app/dist /usr/share/nginx/html
+#  ---> 8c6dfc34a10d
+# Successfully built 8c6dfc34a10d
+# Successfully tagged hello-dock:prod
 ```
 
-```sh
-
-```
+Una vez que se haya creado la imagen, puede ejecutar un nuevo contenedor ejecutando el siguiente comando:
 
 ```sh
+ docker container run --rm --name hello-dock-prod -dp 8080:80 hello-dock:prod
 
+# 224aaba432bb09aca518fdd0365875895c2f5121eb668b2e7b2d5a99c019b953
 ```
+
+La aplicación en ejecución debe estar disponible en http://127.0.0.1:8080:
+
+<div align="center"> 
+  <img src="https://www.freecodecamp.org/news/content/images/size/w1600/2021/01/hello-dock.png" alt="screenshot"/>
+</div>
+
+Las compilaciones de varias etapas pueden ser muy útiles si está creando aplicaciones grandes con muchas dependencias. Si se configura correctamente, las imágenes creadas en varias etapas pueden optimizarse y compactarse mucho.
+
+### Cómo ignorar archivos innecesarios
+
+El `.dockerignore` archivo contiene una lista de archivos y directorios que se excluirán de las compilaciones de imágenes. Puede encontrar un `.dockerignore` archivo creado previamente en el `hello-dock` directorio.
+
+```sh
+.git
+*Dockerfile*
+*docker-compose*
+node_modules
+```
+
+Este `.dockerignore` archivo tiene que estar en el contexto de compilación. Los archivos y directorios mencionados aquí serán ignorados por la `COPY` instrucción. Pero si realiza un montaje de vinculación, el `.dockerignore` archivo no tendrá ningún efecto. He agregado `.dockerignore`archivos donde sea necesario en el repositorio del proyecto.
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
 
 ```sh
 
