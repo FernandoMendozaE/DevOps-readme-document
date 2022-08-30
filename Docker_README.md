@@ -1262,7 +1262,7 @@ Los montajes de enlace se pueden crear usando la opción `--volume` o `-v` para 
 Detenga su `hello-dock-dev` contenedor previamente iniciado e inicie un nuevo contenedor ejecutando el siguiente comando:
 
 ```sh
-docker container run --rm -p 3000:3000 --name hello-dock-dev --volume $(pwd):/home/node/app hello-dock:dev
+docker container run --rm -p 3000:3000 --name hello-dock-dev -v $(pwd):/home/node/app hello-dock:dev
 
 # sh: 1: vite: not found
 # npm ERR! code ELIFECYCLE
@@ -1296,7 +1296,7 @@ Este problema se puede resolver utilizando un volumen anónimo. Un volumen anón
 Entonces, el comando final para iniciar el `hello-dock` contenedor con ambos volúmenes debería ser el siguiente:
 
 ```sh
-docker container run --rm -dp 3000:3000 --name hello-dock-dev -v $(pwd):/home/node/app -v /home/node/a node_modules hello-dock:dev
+docker container run --rm -dp 3000:3000 --name hello-dock-dev -v $(pwd):/home/node/app -v /home/node/app/node_modules hello-dock:dev
 
 # 53d1cfdb3ef148eb6370e338749836160f75f076d0fbec3c2a9b059a8992de8b
 ```
