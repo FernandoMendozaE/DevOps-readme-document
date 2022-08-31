@@ -1488,7 +1488,7 @@ Como puede ver, Docker viene con una red puente predeterminada llamada `bridge` 
 docker container run --rm --detach --name hello-dock --publish 8080:80 fhsinchy/hello-dock
 # a37f723dad3ae793ce40f97eb6bb236761baa92d72a2c27c24fc7fda0756657d
 
-docker network inspect --format='{{range .Containers}}{{.Name}}{{end}}' bridge
+docker network inspect --format='{{range .Containers}} {{.Name}} {{end}}' bridge
 # hello-dock
 ```
 
