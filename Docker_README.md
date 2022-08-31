@@ -66,14 +66,23 @@
       </ul>
     </li>
     <li>
-      <a href='#cómo-convertir-en-contenedor-una-aplicación-de-javascript'>Cómo convertir en contenedor una aplicación de JavaScript</a>
+      <a href="#cómo-convertir-en-contenedor-una-aplicación-de-javascript">Cómo convertir en contenedor una aplicación de JavaScript</a>
       <ul>
         <li><a href="#cómo-escribir-el-dockerfile-de-desarrollo">Cómo escribir el Dockerfile de desarrollo</a></li>
         <li><a href="#cómo-trabajar-con-montajes-de-enlace-en-docker">Cómo trabajar con montajes de enlace en Docker</a></li>
         <li><a href="#cómo-trabajar-con-volúmenes-anónimos-en-docker">Cómo trabajar con volúmenes anónimos en Docker</a></li>
         <li><a href="#cómo-realizar-compilaciones-de-varias-etapas-en-docker">Cómo realizar compilaciones de varias etapas en Docker</a></li>
         <li><a href="#cómo-ignorar-archivos-innecesarios">Cómo ignorar archivos innecesarios</a></li>
-        <li><a href="#"></a></li>
+      </ul>
+    </li>
+    <li>
+      <a href="#conceptos-básicos-de-manipulación-de-red-en-docker">Conceptos básicos de manipulación de red en Docker</a>
+      <ul>
+        <li><a href="#cómo-enumerar-redes-en-docker-network-ls">Cómo enumerar redes en Docker (network ls)</a></li>
+        <li><a href="#cómo-crear-un-puente-definido-por-el-usuario-en-docker-network-create">Cómo crear un puente definido por el usuario en Docker (network create)</a></li>
+        <li><a href="#cómo-adjuntar-un-contenedor-a-una-red-en-docker">Cómo adjuntar un contenedor a una red en Docker</a></li>
+        <li><a href="#cómo-separar-contenedores-de-una-red-en-docker">Cómo separar contenedores de una red en Docker</a></li>
+        <li><a href="#cómo-deshacerse-de-las-redes-en-docker-network-rm">Cómo deshacerse de las redes en Docker (network rm)</a></li>
         <li><a href="#"></a></li>
         <li><a href="#"></a></li>
         <li><a href="#"></a></li>
@@ -1343,8 +1352,8 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 
 Como puede ver, se `Dockerfile` parece mucho a los anteriores con algunas rarezas. La explicación de este archivo es la siguiente:
 
-- La línea 1 inicia la primera etapa de la compilación utilizando `node:lts-alpine` como imagen base. La as `builder` sintaxis asigna un nombre a esta etapa para que se pueda hacer referencia a ella más adelante.
-- Desde la línea 3 hasta la línea 9, son cosas estándar que has visto muchas veces antes. El R`UN npm run build` comando en realidad compila toda la aplicación y la mete dentro del `/app/dist` directorio donde `/app` está el directorio de trabajo y `/dist` es el directorio de salida predeterminado para `vite` las aplicaciones.
+- La línea 1 inicia la primera etapa de la compilación utilizando `node:lts-alpine` como imagen base. La `as builder` sintaxis asigna un nombre a esta etapa para que se pueda hacer referencia a ella más adelante.
+- Desde la línea 3 hasta la línea 9, son cosas estándar que has visto muchas veces antes. El `RUN npm run build` comando en realidad compila toda la aplicación y la mete dentro del `/app/dist` directorio donde `/app` está el directorio de trabajo y `/dist` es el directorio de salida predeterminado para `vite` las aplicaciones.
 - La línea 11 inicia la segunda etapa de la construcción utilizando `nginx:stable-alpine` como imagen base.
 - El servidor NGINX se ejecuta en el puerto 80 de forma predeterminada, por lo que `EXPOSE 80` se agrega la línea.
 - La última línea es una `COPY` instrucción. La `--from=builder` parte indica que desea copiar algunos archivos del `builder` escenario. Después de eso, es una instrucción de copia estándar donde `/app/dist` está la fuente y /`usr/share/nginx/html` el destino. El destino utilizado aquí es la ruta del sitio predeterminado para NGINX, por lo que cualquier archivo estático que coloque allí se entregará automáticamente.
@@ -1441,6 +1450,8 @@ La aplicación en ejecución debe estar disponible en http://127.0.0.1:8080:
 
 Las compilaciones de varias etapas pueden ser muy útiles si está creando aplicaciones grandes con muchas dependencias. Si se configura correctamente, las imágenes creadas en varias etapas pueden optimizarse y compactarse mucho.
 
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
 ### Cómo ignorar archivos innecesarios
 
 El `.dockerignore` archivo contiene una lista de archivos y directorios que se excluirán de las compilaciones de imágenes. Puede encontrar un `.dockerignore` archivo creado previamente en el `hello-dock` directorio.
@@ -1452,65 +1463,196 @@ El `.dockerignore` archivo contiene una lista de archivos y directorios que se e
 node_modules
 ```
 
-Este `.dockerignore` archivo tiene que estar en el contexto de compilación. Los archivos y directorios mencionados aquí serán ignorados por la `COPY` instrucción. Pero si realiza un montaje de vinculación, el `.dockerignore` archivo no tendrá ningún efecto. He agregado `.dockerignore`archivos donde sea necesario en el repositorio del proyecto.
+Este `.dockerignore` archivo tiene que estar en el contexto de compilación. Los archivos y directorios mencionados aquí serán ignorados por la `COPY` instrucción. Pero si realiza un montaje de vinculación, el `.dockerignore` archivo no tendrá ningún efecto.
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
-```sh
+## Conceptos básicos de manipulación de red en Docker
 
-```
+Una red en Docker es otro objeto lógico como un contenedor y una imagen. Al igual que los otros dos, hay una gran cantidad de comandos en el `docker network` grupo para manipular redes.
 
-```sh
-
-```
+Antes de comenzar me gustaría tomarme un tiempo para analizar la red de puente predeterminada que viene con Docker. Comencemos enumerando todas las redes en su sistema:
 
 ```sh
+docker network ls
 
+# NETWORK ID     NAME      DRIVER    SCOPE
+# c2e59f2b96bd   bridge    bridge    local
+# 124dccee067f   host      host      local
+# 506e3822bf1f   none      null      local
 ```
+
+Como puede ver, Docker viene con una red puente predeterminada llamada `bridge` . Cualquier contenedor que ejecute se adjuntará automáticamente a esta red puente:
 
 ```sh
+docker container run --rm --detach --name hello-dock --publish 8080:80 fhsinchy/hello-dock
+# a37f723dad3ae793ce40f97eb6bb236761baa92d72a2c27c24fc7fda0756657d
 
+docker network inspect --format='{{range .Containers}}{{.Name}}{{end}}' bridge
+# hello-dock
 ```
+
+Los contenedores conectados a la red de puente predeterminada pueden comunicarse entre sí mediante direcciones IP que es desaconsejado ya que la IP puede cambiar cada vez que creemos o eliminemos el contenedor, la mejor solución es conectarlas colocándolas bajo una red puente definida por el usuario.
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
+### Cómo enumerar redes en Docker (network ls)
+
+Para enumerar las redes en su sistema, ejecute el siguiente comando:
 
 ```sh
+docker network ls
 
+# NETWORK ID     NAME      DRIVER    SCOPE
+# c2e59f2b96bd   bridge    bridge    local
+# 124dccee067f   host      host      local
+# 506e3822bf1f   none      null      local
 ```
+
+Debería ver tres redes en su sistema. Ahora mire la `DRIVER` columna de la tabla aquí. Estos controladores se pueden tratar como el tipo de red.
+
+De forma predeterminada, Docker tiene cinco controladores de red. Son los siguientes:
+
+- `bridge` - El controlador de red predeterminado en Docker. Esto se puede usar cuando varios contenedores se ejecutan en modo estándar y necesitan comunicarse entre sí.
+- `host` - Elimina el aislamiento de la red por completo. Cualquier contenedor que se ejecuta en una `host` red está básicamente conectado a la red del sistema host.
+- `none` - Este controlador deshabilita la red para contenedores por completo. Todavía no he encontrado ningún caso de uso para esto.
+- `overlay` - Esto se usa para conectar múltiples demonios Docker entre computadoras y está fuera del alcance de este libro.
+- ` macvlan` - Permite asignar direcciones MAC a contenedores, haciéndolos funcionar como dispositivos físicos en una red.
+
+También hay complementos de terceros que le permiten integrar Docker con pilas de red especializadas.
+
+<p align="right">(<a href="#top">volver arriba</a>)</p
+
+### Cómo crear un puente definido por el usuario en Docker (network create)
+
+Se puede crear una red usando el `network create` comando. La sintaxis genérica del comando es la siguiente:
 
 ```sh
-
+docker network create <network name>
 ```
+
+Para crear una red con el nombre skynetejecute el siguiente comando:
 
 ```sh
+docker network create skynet
 
+# 7bd5f351aa892ac6ec15fed8619fc3bbb95a7dcdd58980c28304627c8f7eb070
+
+docker network ls
+
+# NETWORK ID     NAME     DRIVER    SCOPE
+# be0cab667c4b   bridge   bridge    local
+# 124dccee067f   host     host      local
+# 506e3822bf1f   none     null      local
+# 7bd5f351aa89   skynet   bridge    local
 ```
+
+Como puede ver, se ha creado una nueva red con el nombre dado. Actualmente no hay ningún contenedor conectado a esta red. En la siguiente subsección, aprenderá a adjuntar contenedores a una red.
+
+### Cómo adjuntar un contenedor a una red en Docker
+
+Hay principalmente dos formas de adjuntar un contenedor a una red. Primero, puede usar el comando de conexión de red para adjuntar un contenedor a una red. La sintaxis genérica del comando es la siguiente:
 
 ```sh
-
+docker network connect <network identifier> <container identifier>
 ```
+
+Para conectar el `hello-dock` contenedor a la `skynet` red, puede ejecutar el siguiente comando:
 
 ```sh
+docker network connect skynet hello-dock
 
+docker network inspect --format='{{range .Containers}} {{.Name}} {{end}}' skynet
+
+#  hello-dock
+
+docker network inspect --format='{{range .Containers}} {{.Name}} {{end}}' bridge
+
+#  hello-dock
 ```
+
+Como puede ver en los resultados de los dos `network inspect` comandos, el `hello-dock` contenedor ahora está conectado tanto a la red `skynet` como a la predeterminada `bridge` .
+
+La segunda forma de adjuntar un contenedor a una red es usando la `--network` opción para los comandos `container run` o . `container create` la sintaxis genérica de la opción es la siguiente:
 
 ```sh
-
+--network <network identifier>
 ```
+
+Para ejecutar otro hello-dockcontenedor conectado a la misma red, puede ejecutar el siguiente comando:
 
 ```sh
+docker container run --network skynet --rm --name alpine-box -it alpine sh
 
+# lands you into alpine linux shell
+
+/ # ping hello-dock
+
+# PING hello-dock (172.18.0.2): 56 data bytes
+# 64 bytes from 172.18.0.2: seq=0 ttl=64 time=0.191 ms
+# 64 bytes from 172.18.0.2: seq=1 ttl=64 time=0.103 ms
+# 64 bytes from 172.18.0.2: seq=2 ttl=64 time=0.139 ms
+# 64 bytes from 172.18.0.2: seq=3 ttl=64 time=0.142 ms
+# 64 bytes from 172.18.0.2: seq=4 ttl=64 time=0.146 ms
+# 64 bytes from 172.18.0.2: seq=5 ttl=64 time=0.095 ms
+# 64 bytes from 172.18.0.2: seq=6 ttl=64 time=0.181 ms
+# 64 bytes from 172.18.0.2: seq=7 ttl=64 time=0.138 ms
+# 64 bytes from 172.18.0.2: seq=8 ttl=64 time=0.158 ms
+# 64 bytes from 172.18.0.2: seq=9 ttl=64 time=0.137 ms
+# 64 bytes from 172.18.0.2: seq=10 ttl=64 time=0.145 ms
+# 64 bytes from 172.18.0.2: seq=11 ttl=64 time=0.138 ms
+# 64 bytes from 172.18.0.2: seq=12 ttl=64 time=0.085 ms
+
+--- hello-dock ping statistics ---
+13 packets transmitted, 13 packets received, 0% packet loss
+round-trip min/avg/max = 0.085/0.138/0.191 ms
 ```
+
+Como puede ver, la ejecución `ping hello-dock` desde el interior del `alpine-box` contenedor funciona porque ambos contenedores están bajo la misma red de puente definida por el usuario y la resolución automática de DNS está funcionando.
+
+Tenga en cuenta, sin embargo, que para que funcione la resolución automática de DNS, debe asignar nombres personalizados a los contenedores. Usar el nombre generado aleatoriamente no funcionará.
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
+### Cómo separar contenedores de una red en Docker
+
+Puede utilizar el` network disconnect` comando para esta tarea. La sintaxis genérica del comando es la siguiente:
 
 ```sh
-
+docker network disconnect <network identifier> <container identifier>
 ```
+
+Para desconectar el `hello-dock` contenedor de la `skynet` red, puede ejecutar el siguiente comando:
 
 ```sh
-
+docker network disconnect skynet hello-dock
 ```
+
+Al igual que el `network connect` comando, el `network disconnect` comando no da ningún resultado.
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
+### Cómo deshacerse de las redes en Docker (network rm)
+
+Al igual que los demás objetos lógicos de Docker, las redes se pueden eliminar con el `network rm` comando. La sintaxis genérica del comando es la siguiente:
 
 ```sh
-
+docker network rm <network identifier>
 ```
+
+Para eliminar la `skynet` red de su sistema, puede ejecutar el siguiente comando:
+
+```sh
+docker network rm skynet
+```
+
+También puede usar el `network prune` comando para eliminar cualquier red no utilizada de su sistema. El comando también tiene las opciones `-f` o `--force` y `-a` o `--all` .
+
+```sh
+docker network prune
+```
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
 
 ```sh
 
