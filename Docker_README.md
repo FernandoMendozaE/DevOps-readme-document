@@ -1579,7 +1579,7 @@ La segunda forma de adjuntar un contenedor a una red es usando la `--network` op
 --network <network identifier>
 ```
 
-Para ejecutar otro hello-dockcontenedor conectado a la misma red, puede ejecutar el siguiente comando:
+Para ejecutar otro `hello-dock` contenedor conectado a la misma red, puede ejecutar el siguiente comando:
 
 ```sh
 docker container run --network skynet --rm --name alpine-box -it alpine sh
@@ -1616,7 +1616,7 @@ Tenga en cuenta, sin embargo, que para que funcione la resolución automática d
 
 ### Cómo separar contenedores de una red en Docker
 
-Puede utilizar el` network disconnect` comando para esta tarea. La sintaxis genérica del comando es la siguiente:
+Puede utilizar el `network disconnect` comando para esta tarea. La sintaxis genérica del comando es la siguiente:
 
 ```sh
 docker network disconnect <network identifier> <container identifier>
@@ -1646,7 +1646,7 @@ Para eliminar la `skynet` red de su sistema, puede ejecutar el siguiente comando
 docker network rm skynet
 ```
 
-También puede usar el `network prune` comando para eliminar cualquier red no utilizada de su sistema. El comando también tiene las opciones `-f` o `--force` y `-a` o `--all` .
+También puede usar el `network prune` comando para eliminar cualquier red no utilizada de su sistema. El comando también tiene las opciones `-f` o `--force` .
 
 ```sh
 docker network prune
