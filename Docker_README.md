@@ -1516,12 +1516,12 @@ De forma predeterminada, Docker tiene cinco controladores de red. Son los siguie
 - `bridge` - El controlador de red predeterminado en Docker. Esto se puede usar cuando varios contenedores se ejecutan en modo estándar y necesitan comunicarse entre sí.
 - `host` - Elimina el aislamiento de la red por completo. Cualquier contenedor que se ejecuta en una `host` red está básicamente conectado a la red del sistema host.
 - `none` - Este controlador deshabilita la red para contenedores por completo. Todavía no he encontrado ningún caso de uso para esto.
-- `overlay` - Esto se usa para conectar múltiples demonios Docker entre computadoras y está fuera del alcance de este libro.
+- `overlay` - Esto se usa para conectar múltiples demonios Docker entre computadoras.
 - ` macvlan` - Permite asignar direcciones MAC a contenedores, haciéndolos funcionar como dispositivos físicos en una red.
 
 También hay complementos de terceros que le permiten integrar Docker con pilas de red especializadas.
 
-<p align="right">(<a href="#top">volver arriba</a>)</p
+<p align="right">(<a href="#top">volver arriba</a>)</p>
 
 ### Cómo crear un puente definido por el usuario en Docker (network create)
 
