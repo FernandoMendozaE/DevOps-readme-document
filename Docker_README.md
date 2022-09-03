@@ -2154,7 +2154,7 @@ Ahora que ha aprendido lo suficiente sobre las redes en Docker, en esta sección
       El contenedor se está ejecutando ahora. Puede visitar http://127.0.0.1:3000/para ver la API en acción.
 
       <div align="center"> 
-        <img src="https://www.freecodecamp.org/news/content/images/size/w1600/2021/01/bonjour-mon-ami.png" alt="screenshot" width="500" height="200"/>
+        <img src="https://www.freecodecamp.org/news/content/images/size/w1600/2021/01/bonjour-mon-ami.png" alt="screenshot" width="500"/>
       </div>
 
       La API tiene cinco rutas en total que puedes ver dentro del `/notes-api/api/api/routes/notes.js` archivo.
