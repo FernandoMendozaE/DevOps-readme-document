@@ -85,7 +85,6 @@
         <li><a href="#cómo-deshacerse-de-las-redes-en-docker-network-rm">Cómo deshacerse de las redes en Docker (network rm)</a></li>
       </ul>
     </li>
-    <li><a href="#contributing">Contributing</a></li>
     <li>
       <a href="#cómo-convertir-en-contenedor-una-aplicación-de-javascript-de-varios-contenedores">Cómo convertir en contenedor una aplicación de JavaScript de varios contenedores</a>
       <ul>
@@ -105,6 +104,7 @@
         <li><a href="#"></a></li>
       </ul>
     </li>
+    <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
     <li><a href="#acknowledgments">Acknowledgments</a></li>
@@ -1565,6 +1565,8 @@ docker network ls
 
 Como puede ver, se ha creado una nueva red con el nombre dado. Actualmente no hay ningún contenedor conectado a esta red. En la siguiente subsección, aprenderá a adjuntar contenedores a una red.
 
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
 ### Cómo adjuntar un contenedor a una red en Docker
 
 Hay principalmente dos formas de adjuntar un contenedor a una red. Primero, puede usar el comando de conexión de red para adjuntar un contenedor a una red. La sintaxis genérica del comando es la siguiente:
@@ -1715,6 +1717,8 @@ Ahora, ¿qué pasa si el contenedor se destruye por alguna razón? Perderás tod
 
 Un volumen con nombre es muy similar a un volumen anónimo excepto que puede hacer referencia a un volumen con nombre usando su nombre.
 
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
 #### Comó crear un volúmen (volume create)
 
 El `volume create` comando se puede utilizar para crear un volumen con nombre.
@@ -1734,6 +1738,8 @@ docker volume create notes-db-data
 
 ```
 
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
 #### Cómo enumerar volúmenes (volumen ls)
 
 Para listar listar los volúmenes creados puede ejecutar el siguiente comando:
@@ -1744,6 +1750,8 @@ docker volume ls
 # DRIVER    VOLUME NAME
 # local     notes-db-data
 ```
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
 
 #### Cómo adjuntar un volúmen a un contenedor en Docker (-v)
 
@@ -1758,7 +1766,6 @@ docker container run \
     --name=notes-db \
     -e POSTGRES_DB=notesdb \
     -e POSTGRES_PASSWORD=secret \
-    --network=notes-api-network \
     postgres:12
 
 # 37755e86d62794ed3e67c19d0cd1eba431e26ab56099b92a3456908c1d346791
@@ -1772,7 +1779,9 @@ docker container inspect --format='{{range .Mounts}} {{ .Name }} {{end}}' notes-
 #  notes-db-data
 ```
 
-Ahora los datos se almacenarán de forma segura dentro del `notes-db-data` volumen y se podrán reutilizar en el futuro. También se puede usar un montaje de enlace en lugar de un volumen con nombre aquí, pero prefiero un volumen con nombre en tales escenarios.
+Ahora los datos se almacenarán de forma segura dentro del `notes-db-data` volumen y se podrán reutilizar en el futuro. También se puede usar un montaje de enlace en lugar de un volumen con nombre, pero prefiero un volumen con nombre en tales escenarios.
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
 
 #### Cómo eliminar volúmenes (volume rm)
 
@@ -1807,6 +1816,8 @@ Ahora los datos se almacenarán de forma segura dentro del `notes-db-data` volum
   ```sh
   docker rm -v container_name
   ```
+
+  <p align="right">(<a href="#top">volver arriba</a>)</p>
 
 ## Cómo acceder a los registros desde un contenedor en Docker (logs)
 
