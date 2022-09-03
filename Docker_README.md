@@ -1917,7 +1917,7 @@ Ahora que ha aprendido lo suficiente sobre las redes en Docker, en esta sección
 
     - Cómo escribir el Dockerfile
 
-          Vaya al directorio donde ha clonado el [código](https://github.com/fhsinchy/docker-handbook-projects) del proyecto. Dentro de allí, ve dentro del `notes-api/api` directorio y crea un nuevo archivo `Dockerfile` . Ponga el siguiente código en el archivo:
+      Vaya al directorio donde ha clonado el [código](https://github.com/fhsinchy/docker-handbook-projects) del proyecto. Dentro de allí, ve dentro del `notes-api/api` directorio y crea un nuevo archivo `Dockerfile` . Ponga el siguiente código en el archivo:
 
           ```sh
           # stage one
