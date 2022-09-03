@@ -2130,7 +2130,7 @@ Ahora que ha aprendido lo suficiente sobre las redes en Docker, en esta sección
       Una vez que esté seguro de que todo está en su lugar, puede ejecutar un nuevo contenedor ejecutando el siguiente comando:
 
       ```sh
-      docker container run -dp 3000:3000 --namenotes-api -e DB_HOST=notes-db -e DB_DATABASE=notesdb -e DB_PASSWORD=secret --network notes-api-network notes-api
+      docker container run -dp 3000:3000 --name notes-api -e DB_HOST=notes-db -e DB_DATABASE=notesdb -e DB_PASSWORD=secret --network notes-api-network notes-api
 
       # f9ece420872de99a060b954e3c236cbb1e23d468feffa7fed1e06985d99fb919
       ```
