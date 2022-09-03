@@ -83,12 +83,28 @@
         <li><a href="#cómo-adjuntar-un-contenedor-a-una-red-en-docker">Cómo adjuntar un contenedor a una red en Docker</a></li>
         <li><a href="#cómo-separar-contenedores-de-una-red-en-docker">Cómo separar contenedores de una red en Docker</a></li>
         <li><a href="#cómo-deshacerse-de-las-redes-en-docker-network-rm">Cómo deshacerse de las redes en Docker (network rm)</a></li>
-        <li><a href="#"></a></li>
-        <li><a href="#"></a></li>
-        <li><a href="#"></a></li>
       </ul>
     </li>
     <li><a href="#contributing">Contributing</a></li>
+    <li>
+      <a href="#cómo-convertir-en-contenedor-una-aplicación-de-javascript-de-varios-contenedores">Cómo convertir en contenedor una aplicación de JavaScript de varios contenedores</a>
+      <ul>
+        <li><a href="#cómo-ejecutar-el-servidor-de-base-de-datos">Cómo ejecutar el servidor de base de datos</a></li>
+        <li>
+          <a href="#cómo-trabajar-con-volúmenes-con-nombre-en-docker">Cómo trabajar con volúmenes con nombre en Docker</a>
+          <ul>
+            <li><a href="#comó-crear-un-volúmen-volume-create">Comó crear un volúmen  (volume create)</a></li>
+            <li><a href="#cómo-enumerar-volúmenes-volumen-ls">Cómo enumerar volúmenes (volumen ls)</a></li>
+            <li><a href="#cómo-adjuntar-un-volúmen-a-un-contenedor-en-docker--v">Cómo adjuntar un volúmen a un contenedor en Docker (-v)</a></li>
+            <li><a href="#cómo-eliminar-volúmenes-volume-rm">Cómo eliminar volúmenes (volume rm)</a></li>
+          </ul>
+        </li>
+        <li><a href="#cómo-acceder-a-los-registros-desde-un-contenedor-en-docker-logs">Cómo acceder a los registros desde un contenedor en Docker (logs)</a></li>
+        <li><a href="#ejemplo-práctico">Ejemplo práctico</a></li>
+        <li><a href="#cómo-ejecutar-comandos-en-un-contenedor-en-ejecución-exec">Cómo ejecutar comandos en un contenedor en ejecución (exec)</a></li>
+        <li><a href="#"></a></li>
+      </ul>
+    </li>
     <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
     <li><a href="#acknowledgments">Acknowledgments</a></li>
@@ -1654,93 +1670,520 @@ docker network prune
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
+## Cómo convertir en contenedor una aplicación de JavaScript de varios contenedores
+
+En esta sección aprenderá a contener un proyecto completo de varios contenedores. El proyecto con el que se trabajará es simple con la `notes-api` tecnología de Express.js y PostgreSQL.
+
+En este proyecto hay dos contenedores en total que tendrás que conectar usando una red. Aparte de esto, también se dara a conocer sobre conceptos como variables de entorno y volúmenes con nombre.
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
+### Cómo ejecutar el servidor de base de datos
+
+El servidor de la base de datos en este proyecto es un servidor PostgreSQL simple y utiliza la [imagen oficial de Postgres](https://hub.docker.com/_/postgres) .
+
+Según los documentos oficiales, para ejecutar un contenedor con esta imagen, debe proporcionar la `POSTGRES_PASSWORD` **variable de entorno**. Además de este, también proporcionaré un nombre para la base de datos predeterminada utilizando la `POSTGRES_DB` variable de entorno. PostgreSQL de forma predeterminada escucha en el puerto `5432` , por lo que también debe publicarlo.
+
+Para ejecutar el servidor de base de datos puede ejecutar el siguiente comando:
+
 ```sh
+docker container run \
+    --detach \
+    --name=notes-db \
+    --env POSTGRES_DB=notesdb \
+    --env POSTGRES_PASSWORD=secret \
+    --network=notes-api-network \
+    postgres:12
+
+# a7b287d34d96c8e81a63949c57b83d7c1d71b5660c87f5172f074bd1606196dc
+
+docker container ls
+
+# CONTAINER ID   IMAGE         COMMAND                  CREATED              STATUS              PORTS      NAMES
+# a7b287d34d96   postgres:12   "docker-entrypoint.s…"   About a minute ago   Up About a minute   5432/tcp   notes-db
+```
+
+La `--env` o `-e` opción para los comandos `container run` y `container create` se puede usar para proporcionar variables de entorno a un contenedor. Como puede ver, el contenedor de la base de datos se ha creado correctamente y ahora se está ejecutando.
+
+Aunque el contenedor se está ejecutando, hay un pequeño problema. Las bases de datos como PostgreSQL, MongoDB y MySQL conservan sus datos en un directorio. PostgreSQL usa el `/var/lib/postgresql/data` directorio dentro del contenedor para conservar los datos.
+
+Ahora, ¿qué pasa si el contenedor se destruye por alguna razón? Perderás todos tus datos. Para resolver este problema, se puede utilizar un volumen con nombre.
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
+### Cómo trabajar con volúmenes con nombre en Docker
+
+Un volumen con nombre es muy similar a un volumen anónimo excepto que puede hacer referencia a un volumen con nombre usando su nombre.
+
+#### Comó crear un volúmen (volume create)
+
+El `volume create` comando se puede utilizar para crear un volumen con nombre.
+
+La sintaxis genérica del comando es la siguiente:
+
+```sh
+docker volume create <volume name>
+```
+
+Para crear un volumen llamado `notes-db-data` puede ejecutar el siguiente comando:
+
+```sh
+docker volume create notes-db-data
+
+# notes-db-data
 
 ```
 
-```sh
+#### Cómo enumerar volúmenes (volumen ls)
 
-```
-
-```sh
-
-```
+Para listar listar los volúmenes creados puede ejecutar el siguiente comando:
 
 ```sh
+docker volume ls
 
+# DRIVER    VOLUME NAME
+# local     notes-db-data
 ```
+
+#### Cómo adjuntar un volúmen a un contenedor en Docker (-v)
+
+Este volumen ahora se puede montar `/var/lib/postgresql/data` en el interior del `notes-db` contenedor.
+
+Ahora ejecute un nuevo contenedor y asigne el volumen usando la opción `--volume` o `-v` :
 
 ```sh
+docker container run \
+    -d \
+    -v notes-db-data:/var/lib/postgresql/data \
+    --name=notes-db \
+    -e POSTGRES_DB=notesdb \
+    -e POSTGRES_PASSWORD=secret \
+    --network=notes-api-network \
+    postgres:12
 
+# 37755e86d62794ed3e67c19d0cd1eba431e26ab56099b92a3456908c1d346791
 ```
+
+Ahora inspeccione el `notes-db` contenedor para asegurarse de que el montaje fue exitoso:
 
 ```sh
+docker container inspect --format='{{range .Mounts}} {{ .Name }} {{end}}' notes-db
 
+#  notes-db-data
 ```
+
+Ahora los datos se almacenarán de forma segura dentro del `notes-db-data` volumen y se podrán reutilizar en el futuro. También se puede usar un montaje de enlace en lugar de un volumen con nombre aquí, pero prefiero un volumen con nombre en tales escenarios.
+
+#### Cómo eliminar volúmenes (volume rm)
+
+- **Eliminar uno o más volúmenes específicos**
+
+  Puede eliminar uno o más volúmenes con el comando docker volume rm:
+
+  ```sh
+  docker volume rm volume_name volume_name
+  ```
+
+- **Eliminar volúmenes pendientes**
+  Debido a que el punto de volúmenes debe existir independientemente de los contenedores, cuando se elimina un contenedor un volumen no se elimina automáticamente al mismo tiempo. Cuando un volumen existe y ya no está conectado a ningún contenedor, se denomina “volumen pendiente”. Para ubicarlos y confirmar que desea eliminarlos, puede utilizar el comando `docker volume ls` con un filtro a fin de limitar los resultados a volúmenes pendientes. Cuando esté conforme con la lista, puede eliminarlos con `docker volume prune`:
+
+  Enumerar:
+
+  ```sh
+  docker volume ls -f dangling=true
+  ```
+
+  Eliminar:
+
+  ```sh
+  docker volume prune
+  ```
+
+- **Eliminar un contenedor y su volumen**
+  Si creó un volumen sin nombre, puede eliminarlo al mismo tiempo que el contenedor utilizando el indicador `-v`. Tenga en cuenta que esto solo funciona con volúmenes sin nombre. Cuando el contenedor se elimina correctamente, se muestra su ID. Tenga en cuenta que no se hace referencia a la eliminación del volumen. Si no tiene nombre, se elimina silenciosamente del sistema. Si se nombra, permanece silenciosamente presente.
+
+  Eliminar:
+
+  ```sh
+  docker rm -v container_name
+  ```
+
+## Cómo acceder a los registros desde un contenedor en Docker (logs)
+
+Para ver los registros de un contenedor, puede usar el `container logs` comando. La sintaxis genérica del comando es la siguiente:
 
 ```sh
-
+docker container logs <container identifier>
 ```
+
+Para acceder a los registros desde el `notes-db` contenedor, puede ejecutar el siguiente comando:
 
 ```sh
+docker container logs notes-db
 
+# The files belonging to this database system will be owned by user "postgres".
+# This user must also own the server process.
+
+# The database cluster will be initialized with locale "en_US.utf8".
+# The default database encoding has accordingly been set to "UTF8".
+# The default text search configuration will be set to "english".
+#
+# Data page checksums are disabled.
+#
+# fixing permissions on existing directory /var/lib/postgresql/data ... ok
+# creating subdirectories ... ok
+# selecting dynamic shared memory implementation ... posix
+# selecting default max_connections ... 100
+# selecting default shared_buffers ... 128MB
+# selecting default time zone ... Etc/UTC
+# creating configuration files ... ok
+# running bootstrap script ... ok
+# performing post-bootstrap initialization ... ok
+# syncing data to disk ... ok
+#
+#
+# Success. You can now start the database server using:
+#
+#     pg_ctl -D /var/lib/postgresql/data -l logfile start
+#
+# initdb: warning: enabling "trust" authentication for local connections
+# You can change this by editing pg_hba.conf or using the option -A, or
+# --auth-local and --auth-host, the next time you run initdb.
+# waiting for server to start....2021-01-25 13:39:21.613 UTC [47] LOG:  starting PostgreSQL 12.5 (Debian 12.5-1.pgdg100+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 8.3.0-6) 8.3.0, 64-bit
+# 2021-01-25 13:39:21.621 UTC [47] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+# 2021-01-25 13:39:21.675 UTC [48] LOG:  database system was shut down at 2021-01-25 13:39:21 UTC
+# 2021-01-25 13:39:21.685 UTC [47] LOG:  database system is ready to accept connections
+#  done
+# server started
+# CREATE DATABASE
+#
+#
+# /usr/local/bin/docker-entrypoint.sh: ignoring /docker-entrypoint-initdb.d/*
+#
+# 2021-01-25 13:39:22.008 UTC [47] LOG:  received fast shutdown request
+# waiting for server to shut down....2021-01-25 13:39:22.015 UTC [47] LOG:  aborting any active transactions
+# 2021-01-25 13:39:22.017 UTC [47] LOG:  background worker "logical replication launcher" (PID 54) exited with exit code 1
+# 2021-01-25 13:39:22.017 UTC [49] LOG:  shutting down
+# 2021-01-25 13:39:22.056 UTC [47] LOG:  database system is shut down
+#  done
+# server stopped
+#
+# PostgreSQL init process complete; ready for start up.
+#
+# 2021-01-25 13:39:22.135 UTC [1] LOG:  starting PostgreSQL 12.5 (Debian 12.5-1.pgdg100+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 8.3.0-6) 8.3.0, 64-bit
+# 2021-01-25 13:39:22.136 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+# 2021-01-25 13:39:22.136 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+# 2021-01-25 13:39:22.147 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+# 2021-01-25 13:39:22.177 UTC [75] LOG:  database system was shut down at 2021-01-25 13:39:22 UTC
+# 2021-01-25 13:39:22.190 UTC [1] LOG:  database system is ready to accept connections
 ```
+
+Evidentemente por el texto en la línea 57, la base de datos está activa y lista para aceptar conexiones desde el exterior. También existe la opción `--follow` o `-f` para el comando que le permite adjuntar la consola a la salida de registros y obtener un flujo continuo de texto.
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
+### Ejemplo práctico
+
+Ahora que ha aprendido lo suficiente sobre las redes en Docker, en esta sección aprenderá a contener un proyecto completo de varios contenedores. El proyecto con el que trabajará es simple con la `notes-api` tecnología de Express.js y PostgreSQL.
+
+1.  **Crear una red**
+    Para hacerlo, cree una red nombrada notes-api-networken su sistema:
+
+    ```sh
+    docker network create notes-api-network
+    ```
+
+2.  **Contenedor base de datos**
+    Para ejecutar el servidor de base de datos puede ejecutar el siguiente comando:
+
+    ```sh
+      docker container run -d --name notes-db -e POSTGRES_DB=notesdb -e POSTGRES_PASSWORD=secret --network notes-api-network postgres:12
+
+      # a7b287d34d96c8e81a63949c57b83d7c1d71b5660c87f5172f074bd1606196dc
+    ```
+
+3.  **Contenedor API**
+
+    - Cómo escribir el Dockerfile
+
+          Vaya al directorio donde ha clonado el [código](https://github.com/fhsinchy/docker-handbook-projects) del proyecto. Dentro de allí, ve dentro del `notes-api/api` directorio y crea un nuevo archivo `Dockerfile` . Ponga el siguiente código en el archivo:
+
+          ```sh
+          # stage one
+          FROM node:lts-alpine as builder
+
+          # install dependencies for node-gyp
+          RUN apk add --no-cache python make g++
+
+          WORKDIR /app
+
+          COPY ./package.json .
+          RUN npm install --only=prod
+
+          # stage two
+          FROM node:lts-alpine
+
+          EXPOSE 3000
+          ENV NODE_ENV=production
+
+          USER node
+          RUN mkdir -p /home/node/app
+          WORKDIR /home/node/app
+
+          COPY . .
+          COPY --from=builder /app/node_modules  /home/node/app/node_modules
+
+          CMD [ "node", "bin/www" ]
+          ```
+
+      Esta es una construcción de varias etapas. La primera etapa se usa para construir e instalar las dependencias usando `node-gyp` y la segunda etapa es para ejecutar la aplicación. Voy a ir a través de los pasos brevemente:
+
+      - Stage 1 usa `node:lts-alpine` como base y usa `builder` como nombre artístico.
+      - En la línea 5, instalamos `python` , `make` y `g++` . La `node-gyp` herramienta requiere estos tres paquetes para ejecutarse.
+      - En la línea 7, configuramos `/app` el directorio como `WORKDIR` .
+      - En la línea 9 y 10, copiamos el `package.json` archivo `WORKDIR` e instalamos todas las dependencias.
+      - La etapa 2 también se usa `node-lts:alpine` como base.
+      - En la línea 16, configuramos la `NODE_ENV` variable de entorno en `production` . Esto es importante para que la API funcione correctamente.
+      - De la línea 18 a la línea 20, configuramos el usuario predeterminado en `node` , creamos el `/home/node/app` directorio y lo configuramos como WORKDIR.
+      - En la línea 22 copiamos todos los archivos del proyecto y en la línea 23 copiamos el `node_modules` directorio del `builder` escenario. Este directorio contiene todas las dependencias integradas necesarias para ejecutar la aplicación.
+      - En la línea 25, configuramos el comando predeterminado.
+
+      Para construir una imagen a partir de esto `Dockerfile` , puede ejecutar el siguiente comando:
+
+      ```sh
+      docker image build --tag notes-api .
+
+      # Sending build context to Docker daemon  37.38kB
+      # Step 1/14 : FROM node:lts-alpine as builder
+      #  ---> 471e8b4eb0b2
+      # Step 2/14 : RUN apk add --no-cache python make g++
+      #  ---> Running in 5f20a0ecc04b
+      # fetch http://dl-cdn.alpinelinux.org/alpine/v3.11/main/x86_64/APKINDEX.tar.gz
+      # fetch http://dl-cdn.alpinelinux.org/alpine/v3.11/community/x86_64/APKINDEX.tar.gz
+      # (1/21) Installing binutils (2.33.1-r0)
+      # (2/21) Installing gmp (6.1.2-r1)
+      # (3/21) Installing isl (0.18-r0)
+      # (4/21) Installing libgomp (9.3.0-r0)
+      # (5/21) Installing libatomic (9.3.0-r0)
+      # (6/21) Installing mpfr4 (4.0.2-r1)
+      # (7/21) Installing mpc1 (1.1.0-r1)
+      # (8/21) Installing gcc (9.3.0-r0)
+      # (9/21) Installing musl-dev (1.1.24-r3)
+      # (10/21) Installing libc-dev (0.7.2-r0)
+      # (11/21) Installing g++ (9.3.0-r0)
+      # (12/21) Installing make (4.2.1-r2)
+      # (13/21) Installing libbz2 (1.0.8-r1)
+      # (14/21) Installing expat (2.2.9-r1)
+      # (15/21) Installing libffi (3.2.1-r6)
+      # (16/21) Installing gdbm (1.13-r1)
+      # (17/21) Installing ncurses-terminfo-base (6.1_p20200118-r4)
+      # (18/21) Installing ncurses-libs (6.1_p20200118-r4)
+      # (19/21) Installing readline (8.0.1-r0)
+      # (20/21) Installing sqlite-libs (3.30.1-r2)
+      # (21/21) Installing python2 (2.7.18-r0)
+      # Executing busybox-1.31.1-r9.trigger
+      # OK: 212 MiB in 37 packages
+      # Removing intermediate container 5f20a0ecc04b
+      #  ---> 637ca797d709
+      # Step 3/14 : WORKDIR /app
+      #  ---> Running in 846361b57599
+      # Removing intermediate container 846361b57599
+      #  ---> 3d58a482896e
+      # Step 4/14 : COPY ./package.json .
+      #  ---> 11b387794039
+      # Step 5/14 : RUN npm install --only=prod
+      #  ---> Running in 2e27e33f935d
+      #  added 269 packages from 220 contributors and audited 1137 packages in 140.322s
+      #
+      # 4 packages are looking for funding
+      #   run `npm fund` for details
+      #
+      # found 0 vulnerabilities
+      #
+      # Removing intermediate container 2e27e33f935d
+      #  ---> eb7cb2cb0b20
+      # Step 6/14 : FROM node:lts-alpine
+      #  ---> 471e8b4eb0b2
+      # Step 7/14 : EXPOSE 3000
+      #  ---> Running in 4ea24f871747
+      # Removing intermediate container 4ea24f871747
+      #  ---> 1f0206f2f050
+      # Step 8/14 : ENV NODE_ENV=production
+      #  ---> Running in 5d40d6ac3b7e
+      # Removing intermediate container 5d40d6ac3b7e
+      #  ---> 31f62da17929
+      # Step 9/14 : USER node
+      #  ---> Running in 0963e1fb19a0
+      # Removing intermediate container 0963e1fb19a0
+      #  ---> 0f4045152b1c
+      # Step 10/14 : RUN mkdir -p /home/node/app
+      #  ---> Running in 0ac591b3adbd
+      # Removing intermediate container 0ac591b3adbd
+      #  ---> 5908373dfc75
+      # Step 11/14 : WORKDIR /home/node/app
+      #  ---> Running in 55253b62ff57
+      # Removing intermediate container 55253b62ff57
+      #  ---> 2883cdb7c77a
+      # Step 12/14 : COPY . .
+      #  ---> 8e60893a7142
+      # Step 13/14 : COPY --from=builder /app/node_modules  /home/node/app/node_modules
+      #  ---> 27a85faa4342
+      # Step 14/14 : CMD [ "node", "bin/www" ]
+      #  ---> Running in 349c8ca6dd3e
+      # Removing intermediate container 349c8ca6dd3e
+      #  ---> 9ea100571585
+      # Successfully built 9ea100571585
+      # Successfully tagged notes-api:latest
+      ```
+
+      Antes de ejecutar un contenedor con esta imagen, asegúrese de que el contenedor de la base de datos se esté ejecutando y esté adjunto al archivo `notes-api-network` .
+
+      ```sh
+      docker container inspect notes-db
+
+      # [
+      #     {
+      #         ...
+      #         "State": {
+      #             "Status": "running",
+      #             "Running": true,
+      #             "Paused": false,
+      #             "Restarting": false,
+      #             "OOMKilled": false,
+      #             "Dead": false,
+      #             "Pid": 11521,
+      #             "ExitCode": 0,
+      #             "Error": "",
+      #             "StartedAt": "2021-01-26T06:55:44.928510218Z",
+      #             "FinishedAt": "2021-01-25T14:19:31.316854657Z"
+      #         },
+      #         ...
+      #         "Mounts": [
+      #             {
+      #                 "Type": "volume",
+      #                 "Name": "notes-db-data",
+      #                 "Source": "/var/lib/docker/volumes/notes-db-data/_data",
+      #                 "Destination": "/var/lib/postgresql/data",
+      #                 "Driver": "local",
+      #                 "Mode": "z",
+      #                 "RW": true,
+      #                 "Propagation": ""
+      #             }
+      #         ],
+      #         ...
+      #         "NetworkSettings": {
+      #             ...
+      #             "Networks": {
+      #                 "bridge": {
+      #                     "IPAMConfig": null,
+      #                     "Links": null,
+      #                     "Aliases": null,
+      #                     "NetworkID": "e4c7ce50a5a2a49672155ff498597db336ecc2e3bbb6ee8baeebcf9fcfa0e1ab",
+      #                     "EndpointID": "2a2587f8285fa020878dd38bdc630cdfca0d769f76fc143d1b554237ce907371",
+      #                     "Gateway": "172.17.0.1",
+      #                     "IPAddress": "172.17.0.2",
+      #                     "IPPrefixLen": 16,
+      #                     "IPv6Gateway": "",
+      #                     "GlobalIPv6Address": "",
+      #                     "GlobalIPv6PrefixLen": 0,
+      #                     "MacAddress": "02:42:ac:11:00:02",
+      #                     "DriverOpts": null
+      #                 },
+      #                 "notes-api-network": {
+      #                     "IPAMConfig": {},
+      #                     "Links": null,
+      #                     "Aliases": [
+      #                         "37755e86d627"
+      #                     ],
+      #                     "NetworkID": "06579ad9f93d59fc3866ac628ed258dfac2ed7bc1a9cd6fe6e67220b15d203ea",
+      #                     "EndpointID": "5b8f8718ec9a5ec53e7a13cce3cb540fdf3556fb34242362a8da4cc08d37223c",
+      #                     "Gateway": "172.18.0.1",
+      #                     "IPAddress": "172.18.0.2",
+      #                     "IPPrefixLen": 16,
+      #                     "IPv6Gateway": "",
+      #                     "GlobalIPv6Address": "",
+      #                     "GlobalIPv6PrefixLen": 0,
+      #                     "MacAddress": "02:42:ac:12:00:02",
+      #                     "DriverOpts": {}
+      #                 }
+      #             }
+      #         }
+      #     }
+      # ]
+      ```
+
+      En mi sistema, el `notes-db` contenedor se está ejecutando, usa el `notes-db-data` volumen y está conectado al `notes-api-network` puente.
+
+      Una vez que esté seguro de que todo está en su lugar, puede ejecutar un nuevo contenedor ejecutando el siguiente comando:
+
+      ```sh
+      docker container run -dp 3000:3000 --namenotes-api -e DB_HOST=notes-db -e DB_DATABASE=notesdb -e DB_PASSWORD=secret --network notes-api-network notes-api
+
+      # f9ece420872de99a060b954e3c236cbb1e23d468feffa7fed1e06985d99fb919
+      ```
+
+      La `notes-api` aplicación requiere que se establezcan tres variables de entorno. Son los siguientes:
+
+      - `DB_HOST` - Este es el host del servidor de la base de datos. Dado que tanto el servidor de la base de datos como la API están conectados a la misma red de puente definida por el usuario, se puede hacer referencia al servidor de la base de datos utilizando su nombre de contenedor, que es `notes-db` en este caso.
+      - `DB_DATABASE` - La base de datos que usará esta API. Al ejecutar el servidor de la base de datos , establecemos el nombre de la base de datos predeterminado para `notesdb` usar la `POSTGRES_DB` variable de entorno. Usaremos eso aquí.
+      - `DB_PASSWORD` - Contraseña para conectarse a la base de datos. Esto también se configuró en la subsección Ejecución del servidor de la base `POSTGRES_PASSWORD` de datos mediante la variable de entorno.
+
+      Para verificar si el contenedor se está ejecutando correctamente o no, puede usar el `docker ps` comando:
+
+      ```sh
+      docker ps
+
+      # CONTAINER ID   IMAGE         COMMAND                  CREATED          STATUS          PORTS                    NAMES
+      # f9ece420872d   notes-api     "docker-entrypoint.s…"   12 minutes ago   Up 12 minutes   0.0.0.0:3000->3000/tcp   notes-api
+      # 37755e86d627   postgres:12   "docker-entrypoint.s…"   17 hours ago     Up 14 minutes   5432/tcp                 notes-db
+      ```
+
+      El contenedor se está ejecutando ahora. Puede visitar http://127.0.0.1:3000/para ver la API en acción.
+
+      <div align="center"> 
+        <img src="https://www.freecodecamp.org/news/content/images/size/w1600/2021/01/bonjour-mon-ami.png" alt="screenshot"/>
+      </div>
+
+      La API tiene cinco rutas en total que puedes ver dentro del `/notes-api/api/api/routes/notes.js` archivo.
+
+      Aunque el contenedor se está ejecutando, hay una última cosa que deberá hacer antes de poder comenzar a usarlo. Deberá ejecutar la migración de la base de datos necesaria para configurar las tablas de la base de datos, y puede hacerlo ejecutando `npm run db:migrate` el comando dentro del contenedor.
+
+      <p align="right">(<a href="#top">volver arriba</a>)</p>
+
+### Cómo ejecutar comandos en un contenedor en ejecución (exec)
+
+Para ejecutar un comando dentro de un contenedor en ejecución, deberá usar el `exec` .
+
+La sintaxis genérica del execcomando es la siguiente:
 
 ```sh
-
+docker container exec <container identifier> <command>
 ```
+
+Ejemplo:
+
+Para ejecutar `npm run db:migrate` dentro del `notes-api` contenedor, puede ejecutar el siguiente comando:
 
 ```sh
+docker container exec notes-api npm run db:migrate
 
+# > notes-api@ db:migrate /home/node/app
+# > knex migrate:latest
+#
+# Using environment: production
+# Batch 1 run: 1 migrations
 ```
+
+En los casos en los que desee ejecutar un comando interactivo dentro de un contenedor en ejecución, deberá usar la `-it` bandera. Como ejemplo, si desea acceder al shell que se ejecuta dentro del `notes-api` contenedor, puede ejecutar siguiendo el comando:
 
 ```sh
+docker container exec -it notes-api sh
 
+# / # uname -a
+# Linux b5b1367d6b31 5.10.9-201.fc33.x86_64 #1 SMP Wed Jan 20 16:56:23 UTC 2021 x86_64 Linux
 ```
 
-```sh
-
-```
-
-```sh
-
-```
-
-```sh
-
-```
-
-```sh
-
-```
-
-```sh
-
-```
-
-```sh
-
-```
-
-```sh
-
-```
-
-```sh
-
-```
-
-```sh
-
-```
-
-```sh
-
-```
-
-```sh
-
-```
+<p align="right">(<a href="#top">volver arriba</a>)</p>
 
 ```sh
 
