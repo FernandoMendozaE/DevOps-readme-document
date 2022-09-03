@@ -2138,8 +2138,8 @@ Ahora que ha aprendido lo suficiente sobre las redes en Docker, en esta sección
       La `notes-api` aplicación requiere que se establezcan tres variables de entorno. Son los siguientes:
 
       - `DB_HOST` - Este es el host del servidor de la base de datos. Dado que tanto el servidor de la base de datos como la API están conectados a la misma red de puente definida por el usuario, se puede hacer referencia al servidor de la base de datos utilizando su nombre de contenedor, que es `notes-db` en este caso.
-      - `DB_DATABASE` - La base de datos que usará esta API. Al ejecutar el servidor de la base de datos , establecemos el nombre de la base de datos predeterminado para `notesdb` usar la `POSTGRES_DB` variable de entorno. Usaremos eso aquí.
-      - `DB_PASSWORD` - Contraseña para conectarse a la base de datos. Esto también se configuró en la subsección Ejecución del servidor de la base `POSTGRES_PASSWORD` de datos mediante la variable de entorno.
+      - `DB_DATABASE` - La base de datos que usará esta API. Al ejecutar el servidor de la base de datos, establecemos el nombre de la base de datos predeterminado para `notesdb` usar la `POSTGRES_DB` variable de entorno. Usaremos eso aquí.
+      - `DB_PASSWORD` - Contraseña para conectarse a la base de datos. Esto también se configuró en la subsección ejecución del servidor de la base `POSTGRES_PASSWORD` de datos mediante la variable de entorno.
 
       Para verificar si el contenedor se está ejecutando correctamente o no, puede usar el `docker ps` comando:
 
@@ -2154,7 +2154,7 @@ Ahora que ha aprendido lo suficiente sobre las redes en Docker, en esta sección
       El contenedor se está ejecutando ahora. Puede visitar http://127.0.0.1:3000/para ver la API en acción.
 
       <div align="center"> 
-        <img src="https://www.freecodecamp.org/news/content/images/size/w1600/2021/01/bonjour-mon-ami.png" alt="screenshot"/>
+        <img src="https://www.freecodecamp.org/news/content/images/size/w1600/2021/01/bonjour-mon-ami.png" alt="screenshot" width="500" height="200"/>
       </div>
 
       La API tiene cinco rutas en total que puedes ver dentro del `/notes-api/api/api/routes/notes.js` archivo.
