@@ -770,7 +770,7 @@ Para construir la aplicación, necesitamos usar un archivo Dockerfile. Un Docker
    ```sh
    # syntax=docker/dockerfile:1
    FROM node:12-alpine
-   RUN apk add --no-cache python2 g++ make
+   RUN apk add --no-cache python3 g++ make
    WORKDIR /app
    COPY . .
    RUN yarn install --production
@@ -797,7 +797,7 @@ Para construir la aplicación, necesitamos usar un archivo Dockerfile. Un Docker
    #  => [1/5] FROM docker.io/library/node:12-alpine@sha256:d4b15b3d48f42059a15bd659be60afe21762aae9d6cbea6f124440895c27db68                    0.0s
    #  => [internal] load build context                                                                                                          0.3s
    #  => => transferring context: 4.62MB                                                                                                        0.2s
-   #  => CACHED [2/5] RUN apk add --no-cache python2 g++ make                                                                                   0.0s
+   #  => CACHED [2/5] RUN apk add --no-cache python3 g++ make                                                                                   0.0s
    #  => CACHED [3/5] WORKDIR /app                                                                                                              0.0s
    #  => [4/5] COPY . .                                                                                                                         0.3s
    #  => [5/5] RUN yarn install --production                                                                                                   35.9s
@@ -866,7 +866,7 @@ docker image build -t getting-started:v1.0 .
 #  => [1/5] FROM docker.io/library/node:12-alpine@sha256:d4b15b3d48f42059a15bd659be60afe21762aae9d6cbea6f124440895c  0.0s
 #  => [internal] load build context                                                                                  0.6s
 #  => => transferring context: 4.62MB                                                                                0.6s
-#  => CACHED [2/5] RUN apk add --no-cache python2 g++ make                                                           0.0s
+#  => CACHED [2/5] RUN apk add --no-cache python3 g++ make                                                           0.0s
 #  => CACHED [3/5] WORKDIR /app                                                                                      0.0s
 #  => CACHED [4/5] COPY . .                                                                                          0.0s
 #  => CACHED [5/5] RUN yarn install --production                                                                     0.0s
@@ -1898,17 +1898,19 @@ Evidentemente por el texto en la línea 57, la base de datos está activa y list
 Ahora que ha aprendido lo suficiente sobre las redes en Docker, en esta sección aprenderá a contener un proyecto completo de varios contenedores. El proyecto con el que trabajará es simple con la `notes-api` tecnología de Express.js y PostgreSQL.
 
 1.  **Crear una red**
-    Para hacerlo, cree una red nombrada notes-api-networken su sistema:
+
+    Cree una red nombrada `notes-api-network` en su sistema:
 
     ```sh
     docker network create notes-api-network
     ```
 
 2.  **Contenedor base de datos**
+
     Para ejecutar el servidor de base de datos puede ejecutar el siguiente comando:
 
     ```sh
-      docker container run -d --name notes-db -e POSTGRES_DB=notesdb -e POSTGRES_PASSWORD=secret --network notes-api-network postgres:12
+      docker container run -d --name notes-db -e POSTGRES_DB=notesdb -e POSTGRES_PASSWORD=secret --network notes-api-network -v notes-db-data:/var/lib/postgresql/data postgres:12
 
       # a7b287d34d96c8e81a63949c57b83d7c1d71b5660c87f5172f074bd1606196dc
     ```
@@ -1991,7 +1993,7 @@ Ahora que ha aprendido lo suficiente sobre las redes en Docker, en esta sección
       # (18/21) Installing ncurses-libs (6.1_p20200118-r4)
       # (19/21) Installing readline (8.0.1-r0)
       # (20/21) Installing sqlite-libs (3.30.1-r2)
-      # (21/21) Installing python2 (2.7.18-r0)
+      # (21/21) Installing python3 (2.7.18-r0)
       # Executing busybox-1.31.1-r9.trigger
       # OK: 212 MiB in 37 packages
       # Removing intermediate container 5f20a0ecc04b
@@ -2123,7 +2125,7 @@ Ahora que ha aprendido lo suficiente sobre las redes en Docker, en esta sección
       # ]
       ```
 
-      En mi sistema, el `notes-db` contenedor se está ejecutando, usa el `notes-db-data` volumen y está conectado al `notes-api-network` puente.
+      He acortado la salida para una fácil visualización aquí. En mi sistema, el `notes-db` contenedor se está ejecutando, usa el `notes-db-data` volumen y está conectado al `notes-api-network` puente.
 
       Una vez que esté seguro de que todo está en su lugar, puede ejecutar un nuevo contenedor ejecutando el siguiente comando:
 
