@@ -1919,33 +1919,33 @@ Ahora que ha aprendido lo suficiente sobre las redes en Docker, en esta sección
 
       Vaya al directorio donde ha clonado el [código](https://github.com/fhsinchy/docker-handbook-projects) del proyecto. Dentro de allí, ve dentro del `notes-api/api` directorio y crea un nuevo archivo `Dockerfile` . Ponga el siguiente código en el archivo:
 
-          ```sh
-          # stage one
-          FROM node:lts-alpine as builder
+      ```sh
+      # stage one
+      FROM node:lts-alpine as builder
 
-          # install dependencies for node-gyp
-          RUN apk add --no-cache python make g++
+      # install dependencies for node-gyp
+      RUN apk add --no-cache python make g++
 
-          WORKDIR /app
+      WORKDIR /app
 
-          COPY ./package.json .
-          RUN npm install --only=prod
+      COPY ./package.json .
+      RUN npm install --only=prod
 
-          # stage two
-          FROM node:lts-alpine
+      # stage two
+      FROM node:lts-alpine
 
-          EXPOSE 3000
-          ENV NODE_ENV=production
+      EXPOSE 3000
+      ENV NODE_ENV=production
 
-          USER node
-          RUN mkdir -p /home/node/app
-          WORKDIR /home/node/app
+      USER node
+      RUN mkdir -p /home/node/app
+      WORKDIR /home/node/app
 
-          COPY . .
-          COPY --from=builder /app/node_modules  /home/node/app/node_modules
+      COPY . .
+      COPY --from=builder /app/node_modules  /home/node/app/node_modules
 
-          CMD [ "node", "bin/www" ]
-          ```
+      CMD [ "node", "bin/www" ]
+      ```
 
       Esta es una construcción de varias etapas. La primera etapa se usa para construir e instalar las dependencias usando `node-gyp` y la segunda etapa es para ejecutar la aplicación. Voy a ir a través de los pasos brevemente:
 
