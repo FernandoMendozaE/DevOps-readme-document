@@ -2519,26 +2519,26 @@ Esto es solo una parte de la salida del registro. Puede conectar el flujo de sal
 
 Para detener los servicios, hay dos enfoques que puede tomar:
 
-1.  **El `down` comando** detiene todos los contenedores en ejecución y los elimina del sistema. También elimina cualquier red:
+- **El `down` comando** detiene todos los contenedores en ejecución y los elimina del sistema. También elimina cualquier red:
 
-    ```sh
-    docker-compose down --volumes
+  ```sh
+  docker-compose down --volumes
 
-    # Stopping notes-api-dev ... done
-    # Stopping notes-db-dev  ... done
-    # Removing notes-api-dev ... done
-    # Removing notes-db-dev  ... done
-    # Removing network notes-api_default
-    # Removing volume notes-db-dev-data
-    ```
+  # Stopping notes-api-dev ... done
+  # Stopping notes-db-dev  ... done
+  # Removing notes-api-dev ... done
+  # Removing notes-db-dev  ... done
+  # Removing network notes-api_default
+  # Removing volume notes-db-dev-data
+  ```
 
-    La `--volumes` opción indica que desea eliminar cualquier volumen con nombre definido en el `volumes` bloque. Puede obtener información sobre las opciones adicionales para el `down` comando en los [documentos oficiales](https://docs.docker.com/engine/reference/commandline/compose_down/).
+  La `--volumes` opción indica que desea eliminar cualquier volumen con nombre definido en el `volumes` bloque. Puede obtener información sobre las opciones adicionales para el `down` comando en los [documentos oficiales](https://docs.docker.com/engine/reference/commandline/compose_down/).
 
-2.  **El `stop` comando** que funciona de manera idéntica al `container stop` comando. Detiene todos los contenedores de la aplicación y los guarda. Estos contenedores se pueden iniciar más adelante con el comando `start` o `up` .
+- **El `stop` comando** que funciona de manera idéntica al `container stop` comando. Detiene todos los contenedores de la aplicación y los guarda. Estos contenedores se pueden iniciar más adelante con el comando `start` o `up` .
 
-    ```sh
-    docker-compose stop
-    ```
+  ```sh
+  docker-compose stop
+  ```
 
 ```sh
 
