@@ -108,10 +108,10 @@
       <ul>
         <li><a href="#conceptos-básicos-de-redacción-de-docker">Conceptos básicos de redacción de Docker</a></li>
         <li><a href="#cómo-iniciar-servicios-en-docker-compose-up">Cómo iniciar servicios en Docker Compose (up)</a></li>
-        <li><a href="#"></a></li>
-        <li><a href="#"></a></li>
-        <li><a href="#"></a></li>
-        <li><a href="#"></a></li>
+        <li><a href="#cómo-listar-servicios-en-docker-compose-ps">Cómo listar servicios en Docker Compose (ps)</a></li>
+        <li><a href="#cómo-ejecutar-comandos-dentro-de-un-servicio-en-ejecución-en-docker-compose-exec">Cómo ejecutar comandos dentro de un servicio en ejecución en Docker Compose (exec)</a></li>
+        <li><a href="#cómo-acceder-a-los-registros-desde-un-servicio-en-ejecución-en-docker-compose-logs">Cómo acceder a los registros desde un servicio en ejecución en Docker Compose (logs)</a></li>
+        <li><a href="#cómo-detener-servicios-en-docker-compose-down-o-stop">Cómo detener servicios en Docker Compose (down o stop)</a></li>
         <li><a href="#"></a></li>
         <li><a href="#"></a></li>
       </ul>
@@ -2440,32 +2440,102 @@ docker-compose --file docker-compose.yaml up --detach
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
-```sh
+### Cómo listar servicios en Docker Compose (ps)
 
+Aunque los contenedores de servicios iniciados por Compose se pueden enumerar con el `container ls` comando, existe el `ps` comando para enumerar contenedores definidos solo en YAML.
+
+```sh
+docker-compose ps
+
+#     Name                   Command               State           Ports
+# -------------------------------------------------------------------------------
+# notes-api-dev   docker-entrypoint.sh ./nod ...   Up      0.0.0.0:3000->3000/tcp
+# notes-db-dev    docker-entrypoint.sh postgres    Up      5432/tcp
 ```
 
-```sh
+No es tan informativo como el `container ls` resultado, pero es útil cuando tiene toneladas de contenedores ejecutándose simultáneamente.
 
+### Cómo ejecutar comandos dentro de un servicio en ejecución en Docker Compose (exec)
+
+Espero que recuerde de la sección anterior que debe ejecutar algunos scripts de migración para crear las tablas de la base de datos para esta API.
+
+Al igual que el `container exec` comando, hay un `exec`comando para `docker-compose` . La sintaxis genérica del comando es la siguiente:
+
+```sh
+docker-compose exec <service name> <command>
 ```
 
-```sh
+Para ejecutar el `npm run db:migrate` comando dentro del `api` servicio, puede ejecutar el siguiente comando:
 
+```sh
+docker-compose exec api npm run db:migrate
+
+# > notes-api@ db:migrate /home/node/app
+# > knex migrate:latest
+#
+# Using environment: development
+# Batch 1 run: 1 migrations
 ```
 
-```sh
+A diferencia del `container exec` comando, no necesita pasar el `-it` indicador para las sesiones interactivas. `docker-compose` hace eso automáticamente.
 
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
+### Cómo acceder a los registros desde un servicio en ejecución en Docker Compose (logs)
+
+También puede usar el `logs` comando para recuperar registros de un servicio en ejecución. La sintaxis genérica del comando es la siguiente:
+
+```sh
+docker-compose logs <service name>
 ```
 
-```sh
+Para acceder a los registros del `api` servicio, ejecute el siguiente comando:
 
+```sh
+docker-compose logs api
+
+# Attaching to notes-api-dev
+# notes-api-dev | [nodemon] 2.0.7
+# notes-api-dev | [nodemon] reading config ./nodemon.json
+# notes-api-dev | [nodemon] to restart at any time, enter `rs`
+# notes-api-dev | [nodemon] or send SIGHUP to 1 to restart
+# notes-api-dev | [nodemon] ignoring: *.test.js
+# notes-api-dev | [nodemon] watching path(s): *.*
+# notes-api-dev | [nodemon] watching extensions: js,mjs,json
+# notes-api-dev | [nodemon] starting `node bin/www`
+# notes-api-dev | [nodemon] forking
+# notes-api-dev | [nodemon] child pid: 19
+# notes-api-dev | [nodemon] watching 18 files
+# notes-api-dev | app running -> http://127.0.0.1:3000
 ```
 
-```sh
+Esto es solo una parte de la salida del registro. Puede conectar el flujo de salida del servicio y obtener los registros en tiempo real usando la opción `-f` o . `--follow` cualquier registro posterior aparecerá instantáneamente en la terminal siempre que no salga presionando `ctrl + c` o cerrando la ventana. El contenedor seguirá ejecutándose incluso si sale de la ventana de registro.
 
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
+### Cómo detener servicios en Docker Compose (down o stop)
+
+Para detener los servicios, hay dos enfoques que puede tomar. El primero es el `down` comando.
+
+- **El `down` comando** detiene todos los contenedores en ejecución y los elimina del sistema. También elimina cualquier red:
+
+```sh
+docker-compose down --volumes
+
+# Stopping notes-api-dev ... done
+# Stopping notes-db-dev  ... done
+# Removing notes-api-dev ... done
+# Removing notes-db-dev  ... done
+# Removing network notes-api_default
+# Removing volume notes-db-dev-data
 ```
 
-```sh
+La `--volumes` opción indica que desea eliminar cualquier volumen con nombre definido en el `volumes` bloque. Puede obtener información sobre las opciones adicionales para el `down` comando en los [documentos oficiales](https://docs.docker.com/engine/reference/commandline/compose_down/).
 
+- **El `stop` comando** que funciona de manera idéntica al `container stop` comando. Detiene todos los contenedores de la aplicación y los guarda. Estos contenedores se pueden iniciar más adelante con el comando `start` o `up` .
+
+```sh
+docker-compose stop
 ```
 
 ```sh
