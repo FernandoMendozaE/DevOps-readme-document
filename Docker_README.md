@@ -2457,8 +2457,6 @@ No es tan informativo como el `container ls` resultado, pero es útil cuando tie
 
 ### Cómo ejecutar comandos dentro de un servicio en ejecución en Docker Compose (exec)
 
-Espero que recuerde de la sección anterior que debe ejecutar algunos scripts de migración para crear las tablas de la base de datos para esta API.
-
 Al igual que el `container exec` comando, hay un `exec`comando para `docker-compose` . La sintaxis genérica del comando es la siguiente:
 
 ```sh
@@ -2477,7 +2475,11 @@ docker-compose exec api npm run db:migrate
 # Batch 1 run: 1 migrations
 ```
 
-A diferencia del `container exec` comando, no necesita pasar el `-it` indicador para las sesiones interactivas. `docker-compose` hace eso automáticamente.
+A diferencia del `container exec` comando, no necesita pasar el `-it` indicador para las sesiones interactivas. `docker-compose` hace eso automáticamente, puede ejecutar el siguiente comando:
+
+```sh
+docker-compose exec api sh
+```
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
@@ -2515,28 +2517,28 @@ Esto es solo una parte de la salida del registro. Puede conectar el flujo de sal
 
 ### Cómo detener servicios en Docker Compose (down o stop)
 
-Para detener los servicios, hay dos enfoques que puede tomar. El primero es el `down` comando.
+Para detener los servicios, hay dos enfoques que puede tomar:
 
-- **El `down` comando** detiene todos los contenedores en ejecución y los elimina del sistema. También elimina cualquier red:
+1.  **El `down` comando** detiene todos los contenedores en ejecución y los elimina del sistema. También elimina cualquier red:
 
-```sh
-docker-compose down --volumes
+    ```sh
+    docker-compose down --volumes
 
-# Stopping notes-api-dev ... done
-# Stopping notes-db-dev  ... done
-# Removing notes-api-dev ... done
-# Removing notes-db-dev  ... done
-# Removing network notes-api_default
-# Removing volume notes-db-dev-data
-```
+    # Stopping notes-api-dev ... done
+    # Stopping notes-db-dev  ... done
+    # Removing notes-api-dev ... done
+    # Removing notes-db-dev  ... done
+    # Removing network notes-api_default
+    # Removing volume notes-db-dev-data
+    ```
 
-La `--volumes` opción indica que desea eliminar cualquier volumen con nombre definido en el `volumes` bloque. Puede obtener información sobre las opciones adicionales para el `down` comando en los [documentos oficiales](https://docs.docker.com/engine/reference/commandline/compose_down/).
+    La `--volumes` opción indica que desea eliminar cualquier volumen con nombre definido en el `volumes` bloque. Puede obtener información sobre las opciones adicionales para el `down` comando en los [documentos oficiales](https://docs.docker.com/engine/reference/commandline/compose_down/).
 
-- **El `stop` comando** que funciona de manera idéntica al `container stop` comando. Detiene todos los contenedores de la aplicación y los guarda. Estos contenedores se pueden iniciar más adelante con el comando `start` o `up` .
+2.  **El `stop` comando** que funciona de manera idéntica al `container stop` comando. Detiene todos los contenedores de la aplicación y los guarda. Estos contenedores se pueden iniciar más adelante con el comando `start` o `up` .
 
-```sh
-docker-compose stop
-```
+    ```sh
+    docker-compose stop
+    ```
 
 ```sh
 
