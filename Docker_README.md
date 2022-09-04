@@ -2434,7 +2434,7 @@ docker-compose --file docker-compose.yaml up --detach
 
 - **La opción `--detach` o `-d`** aquí funciona igual que la que ha visto antes. La opción `--file` o `-f` solo es necesaria si el archivo YAML no tiene nombre `docker-compose.yaml` (pero lo he usado aquí con fines de demostración).
 
-Además del `up` comando está el `start` comando. La principal diferencia entre estos dos es que el `start` comando no crea contenedores faltantes, solo inicia contenedores existentes. Es básicamente lo mismo que el `container start` comando.
+- **Además del `up` comando está el `start` comando**. La principal diferencia entre estos dos es que el `start` comando no crea contenedores faltantes, solo inicia contenedores existentes. Es básicamente lo mismo que el `container start` comando.
 
 - **La `--build` opción para el `up` comando** fuerza una reconstrucción de las imágenes. Hay algunas otras opciones para el `up` comando que puede ver en los [documentos](https://docs.docker.com/compose/reference/up/) oficiales.
 
