@@ -101,6 +101,18 @@
         <li><a href="#cómo-acceder-a-los-registros-desde-un-contenedor-en-docker-logs">Cómo acceder a los registros desde un contenedor en Docker (logs)</a></li>
         <li><a href="#ejemplo-práctico">Ejemplo práctico</a></li>
         <li><a href="#cómo-ejecutar-comandos-en-un-contenedor-en-ejecución-exec">Cómo ejecutar comandos en un contenedor en ejecución (exec)</a></li>
+      </ul>
+    </li>
+    <li>
+      <a href="#cómo-componer-proyectos-usando-docker---compose">Cómo componer proyectos usando Docker-Compose</a>
+      <ul>
+        <li><a href="#conceptos-básicos-de-redacción-de-docker">Conceptos básicos de redacción de Docker</a></li>
+        <li><a href="#cómo-iniciar-servicios-en-docker-compose-up">Cómo iniciar servicios en Docker Compose (up)</a></li>
+        <li><a href="#"></a></li>
+        <li><a href="#"></a></li>
+        <li><a href="#"></a></li>
+        <li><a href="#"></a></li>
+        <li><a href="#"></a></li>
         <li><a href="#"></a></li>
       </ul>
     </li>
@@ -2198,6 +2210,236 @@ docker container exec -it notes-api sh
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
+## Cómo componer proyectos usando Docker - Compose
+
+En la sección anterior, aprendió sobre cómo administrar un proyecto de varios contenedores y sus dificultades. En lugar de escribir tantos comandos, hay una manera más fácil de administrar proyectos de varios contenedores, una herramienta llamada [Docker Compose](https://docs.docker.com/compose/).
+
+> Compose es una herramienta para definir y ejecutar aplicaciones Docker de varios contenedores. Con Compose, utiliza un archivo YAML para configurar los servicios de su aplicación. Luego, con un solo comando, crea e inicia todos los servicios desde su configuración.
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
+### Conceptos básicos de redacción de Docker
+
+Vaya al directorio donde ha clonado el [repositorio](https://github.com/fhsinchy/docker-handbook-projects) que vino con este libro. Vaya dentro del `notes-api/api` directorio y cree un `Dockerfile.dev` archivo. Pon el siguiente código en él:
+
+```sh
+# stage one
+FROM node:lts-alpine as builder
+
+# install dependencies for node-gyp
+RUN apk add --no-cache python make g++
+
+WORKDIR /app
+
+COPY ./package.json .
+RUN npm install
+
+# stage two
+FROM node:lts-alpine
+
+ENV NODE_ENV=development
+
+USER node
+RUN mkdir -p /home/node/app
+WORKDIR /home/node/app
+
+COPY . .
+COPY --from=builder /app/node_modules /home/node/app/node_modules
+
+CMD [ "./node_modules/.bin/nodemon", "--config", "nodemon.json", "bin/www" ]
+```
+
+El código es casi idéntico al `Dockerfile` que trabajó en la sección anterior. Las tres diferencias en este archivo son las siguientes:
+
+- En la línea 10, ejecutamos npm installen lugar de `npm run install --only=prod` porque también queremos las dependencias de desarrollo.
+- En la línea 15, configuramos la `NODE_ENV` variable de entorno en `development`lugar de production.
+- En la línea 24, usamos una herramienta llamada nodemon para obtener la función de recarga en caliente para la API.
+
+Ya sabes que este proyecto tiene dos contenedores:
+
+- `notes-db` - Un servidor de base de datos impulsado por PostgreSQL.
+- `notes-api` - Una API REST impulsada por Express.js
+
+En el mundo de Compose, cada contenedor que compone la aplicación se conoce como servicio. El primer paso para componer un proyecto de varios contenedores es definir estos servicios.
+
+Al igual que el demonio de Docker usa un archivo `Dockerfile` para crear imágenes, Docker Compose usa un `docker-compose.yaml` archivo para leer las definiciones de servicio.
+
+Dirígete al `notes-api` directorio y crea un nuevo `docker-compose.yaml` archivo. Coloque el siguiente código en el archivo recién creado:
+
+```sh
+version: "3.8"
+
+services:
+    db:
+        image: postgres:12
+        container_name: notes-db-dev
+        volumes:
+            - notes-db-dev-data:/var/lib/postgresql/data
+        environment:
+            POSTGRES_DB: notesdb
+            POSTGRES_PASSWORD: secret
+    api:
+        build:
+            context: ./api
+            dockerfile: Dockerfile.dev
+        image: notes-api:dev
+        container_name: notes-api-dev
+        environment:
+            DB_HOST: db ## same as the database service name
+            DB_DATABASE: notesdb
+            DB_PASSWORD: secret
+        volumes:
+            - /home/node/app/node_modules
+            - ./api:/home/node/app
+        ports:
+            - 3000:3000
+
+volumes:
+    notes-db-dev-data:
+        name: notes-db-dev-data
+```
+
+Cada archivo válido `docker-compose.yaml` comienza definiendo la versión del archivo. Al momento de escribir,` 3.8` es la última versión. Puede consultar la última versión aquí .
+
+Los bloques en un archivo YAML se definen mediante sangría. Revisaré cada uno de los bloques y explicaré lo que hacen.
+
+- El `services` bloque contiene las definiciones de cada uno de los servicios o contenedores de la aplicación. `db` y `api` son los dos servicios que componen este proyecto.
+- El `db` bloque define un nuevo servicio en la aplicación y contiene la información necesaria para iniciar el contenedor. Cada servicio requiere una imagen preconstruida o una `Dockerfile` para ejecutar un contenedor. Para el `db` servicio estamos usando la imagen oficial de PostgreSQL.
+- A diferencia del `db` servicio, una imagen preconstruida para el `api` servicio, no existe así que usaremos el `Dockerfile.dev` archivo.
+- El `volumes` bloque define cualquier volumen de nombre que necesite cualquiera de los servicios. En ese momento solo alista `notes-db-dev-data` el volumen utilizado por el `db` servicio.
+
+Ahora que tiene una visión general de alto nivel de la `docker-compose.yaml` archivo, echemos un vistazo más de cerca a los servicios individuales.
+
+El código de definición del `db` servicio es el siguiente:
+
+```sh
+db:
+    image: postgres:12
+    container_name: notes-db-dev
+    volumes:
+        - db-data:/var/lib/postgresql/data
+    environment:
+        POSTGRES_DB: notesdb
+        POSTGRES_PASSWORD: secret
+```
+
+- El `image` contiene el repositorio de imágenes y la etiqueta utilizada para este contenedor. Estamos usando la `postgres:12` imagen para ejecutar el contenedor de la base de datos.
+- El `container_name` indica el nombre del contenedor. Por defecto, los contenedores se nombran siguiendo la `<project directory name>_<service name>` sintaxis. Puede anular eso usando `container_name` .
+- La `volumes` matriz contiene las asignaciones de volumen para el servicio y admite volúmenes con nombre, volúmenes anónimos y montajes de enlace. la sintaxis `<source>:<destination>` es idéntica a lo que has visto antes.
+- El `environment` mapa contiene los valores de las diversas variables de entorno necesarias para el servicio.
+
+El código de definición del `api` servicio es el siguiente:
+
+```sh
+api:
+    build:
+        context: ./api
+        dockerfile: Dockerfile.dev
+    image: notes-api:dev
+    container_name: notes-api-dev
+    environment:
+        DB_HOST: db ## same as the database service name
+        DB_DATABASE: notesdb
+        DB_PASSWORD: secret
+    volumes:
+        - /home/node/app/node_modules
+        - ./api:/home/node/app
+    ports:
+        - 3000:3000
+```
+
+- El `api` servicio no viene con una imagen preconstruida. En su lugar, tiene una configuración de compilación. Bajo la `build` bloque definimos el contexto y el nombre del Dockerfile para construir una imagen. Ya debería tener una comprensión del contexto y Dockerfile, así que no perderé tiempo explicándolos.
+- La `image` clave contiene el nombre de la imagen que se va a construir. Si no se asigna, la imagen se nombrará siguiendo el `<project directory name>\_<service name>` sintaxis.
+- Dentro del `environment` mapa, la `DB_HOST` variable muestra una característica de Compose. Es decir, puede hacer referencia a otro servicio en la misma aplicación usando su nombre. Entonces `db` aquí, será reemplazado por la dirección IP del `api` contenedor de servicios. Las variables `DB_DATABASE` y tienen que coincidir con y respectivamente del`DB_PASSWORD POSTGRES_DB POSTGRES_PASSWORD db` definición del servicio.
+- En el `volumes` mapa, puede ver un volumen anónimo y un montaje de enlace descrito. La sintaxis es idéntica a la que ha visto en secciones anteriores.
+- El `ports` mapa define cualquier asignación de puertos. La sintaxis `<host port>:<container port>` es idéntica a la `--publish` opción que usó antes.
+
+Finalmente, el código para el `volumes` es el siguiente:
+
+```sh
+volumes:
+    db-data:
+        name: notes-db-dev-data
+```
+
+Cualquier volumen con nombre utilizado en cualquiera de los servicios debe definirse aquí. Si no define un nombre, el volumen se nombrará después de `<project directory name>\_<volume key>` y la clave aquí es `db-data` .
+
+Puede obtener información sobre las diferentes opciones para la configuración del volumen en los [documentos](https://docs.docker.com/compose/compose-file/compose-file-v3/#volumes) oficiales .
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
+### Cómo iniciar servicios en Docker Compose (up)
+
+Hay algunas formas de iniciar servicios definidos en un archivo YAML. El primer comando que aprenderá es el `up` comando. El `up` comando genera las imágenes que faltan, crea contenedores y los inicia de una sola vez.
+
+Sin embargo, antes de ejecutar el comando, asegúrese de haber abierto su terminal en el mismo directorio donde `docker-compose.yaml` se encuentra el archivo. Esto es muy importante para cada `docker-compose` comando que ejecute.
+
+```sh
+docker-compose --file docker-compose.yaml up --detach
+
+# Creating network "notes-api_default" with the default driver
+# Creating volume "notes-db-dev-data" with default driver
+# Building api
+# Sending build context to Docker daemon  37.38kB
+#
+# Step 1/13 : FROM node:lts-alpine as builder
+#  ---> 471e8b4eb0b2
+# Step 2/13 : RUN apk add --no-cache python make g++
+#  ---> Running in 197056ec1964
+### LONG INSTALLATION STUFF GOES HERE ###
+# Removing intermediate container 197056ec1964
+#  ---> 6609935fe50b
+# Step 3/13 : WORKDIR /app
+#  ---> Running in 17010f65c5e7
+# Removing intermediate container 17010f65c5e7
+#  ---> b10d12e676ad
+# Step 4/13 : COPY ./package.json .
+#  ---> 600d31d9362e
+# Step 5/13 : RUN npm install
+#  ---> Running in a14afc8c0743
+### LONG INSTALLATION STUFF GOES HERE ###
+#  Removing intermediate container a14afc8c0743
+#  ---> 952d5d86e361
+# Step 6/13 : FROM node:lts-alpine
+#  ---> 471e8b4eb0b2
+# Step 7/13 : ENV NODE_ENV=development
+#  ---> Running in 0d5376a9e78a
+# Removing intermediate container 0d5376a9e78a
+#  ---> 910c081ce5f5
+# Step 8/13 : USER node
+#  ---> Running in cfaefceb1eff
+# Removing intermediate container cfaefceb1eff
+#  ---> 1480176a1058
+# Step 9/13 : RUN mkdir -p /home/node/app
+#  ---> Running in 3ae30e6fb8b8
+# Removing intermediate container 3ae30e6fb8b8
+#  ---> c391cee4b92c
+# Step 10/13 : WORKDIR /home/node/app
+#  ---> Running in 6aa27f6b50c1
+# Removing intermediate container 6aa27f6b50c1
+#  ---> 761a7435dbca
+# Step 11/13 : COPY . .
+#  ---> b5d5c5bdf3a6
+# Step 12/13 : COPY --from=builder /app/node_modules /home/node/app/node_modules
+#  ---> 9e1a19960420
+# Step 13/13 : CMD [ "./node_modules/.bin/nodemon", "--config", "nodemon.json", "bin/www" ]
+#  ---> Running in 5bdd62236994
+# Removing intermediate container 5bdd62236994
+#  ---> 548e178f1386
+# Successfully built 548e178f1386
+# Successfully tagged notes-api:dev
+# Creating notes-api-dev ... done
+# Creating notes-db-dev  ... done
+```
+
+- **La opción `--detach` o `-d`** aquí funciona igual que la que ha visto antes. La opción `--file` o `-f` solo es necesaria si el archivo YAML no tiene nombre `docker-compose.yaml` (pero lo he usado aquí con fines de demostración).
+
+Además del `up` comando está el `start` comando. La principal diferencia entre estos dos es que el `start` comando no crea contenedores faltantes, solo inicia contenedores existentes. Es básicamente lo mismo que el `container start` comando.
+
+- **La `--build` opción para el `up` comando** fuerza una reconstrucción de las imágenes. Hay algunas otras opciones para el `up` comando que puede ver en los [documentos](https://docs.docker.com/compose/reference/up/) oficiales.
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
 ```sh
 
 ```
@@ -2205,6 +2447,43 @@ docker container exec -it notes-api sh
 ```sh
 
 ```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+```sh
+
+```
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
+<!-- MARKDOWN LINKS & IMAGES -->
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
+<!-- MARKDOWN LINKS & IMAGES -->
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
