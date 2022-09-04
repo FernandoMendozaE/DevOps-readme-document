@@ -1938,7 +1938,7 @@ Ahora que ha aprendido lo suficiente sobre las redes en Docker, en esta sección
       FROM node:lts-alpine as builder
 
       # install dependencies for node-gyp
-      RUN apk add --no-cache python make g++
+      RUN apk add --no-cache python3 make g++
 
       WORKDIR /app
 
@@ -1981,7 +1981,7 @@ Ahora que ha aprendido lo suficiente sobre las redes en Docker, en esta sección
       # Sending build context to Docker daemon  37.38kB
       # Step 1/14 : FROM node:lts-alpine as builder
       #  ---> 471e8b4eb0b2
-      # Step 2/14 : RUN apk add --no-cache python make g++
+      # Step 2/14 : RUN apk add --no-cache python3 make g++
       #  ---> Running in 5f20a0ecc04b
       # fetch http://dl-cdn.alpinelinux.org/alpine/v3.11/main/x86_64/APKINDEX.tar.gz
       # fetch http://dl-cdn.alpinelinux.org/alpine/v3.11/community/x86_64/APKINDEX.tar.gz
@@ -2227,7 +2227,7 @@ Vaya al directorio donde ha clonado el [repositorio](https://github.com/fhsinchy
 FROM node:lts-alpine as builder
 
 # install dependencies for node-gyp
-RUN apk add --no-cache python make g++
+RUN apk add --no-cache python3 make g++
 
 WORKDIR /app
 
@@ -2251,7 +2251,7 @@ CMD [ "./node_modules/.bin/nodemon", "--config", "nodemon.json", "bin/www" ]
 
 El código es casi idéntico al `Dockerfile` que trabajó en la sección anterior. Las tres diferencias en este archivo son las siguientes:
 
-- En la línea 10, ejecutamos npm installen lugar de `npm run install --only=prod` porque también queremos las dependencias de desarrollo.
+- En la línea 10, ejecutamos `npm install` en lugar de `npm run install --only=prod` porque también queremos las dependencias de desarrollo.
 - En la línea 15, configuramos la `NODE_ENV` variable de entorno en `development`lugar de production.
 - En la línea 24, usamos una herramienta llamada nodemon para obtener la función de recarga en caliente para la API.
 
@@ -2299,7 +2299,7 @@ volumes:
         name: notes-db-dev-data
 ```
 
-Cada archivo válido `docker-compose.yaml` comienza definiendo la versión del archivo. Al momento de escribir,` 3.8` es la última versión. Puede consultar la última versión aquí .
+Cada archivo válido `docker-compose.yaml` comienza definiendo la versión del archivo. Al momento de escribir,`3.8` es la última versión.
 
 Los bloques en un archivo YAML se definen mediante sangría. Revisaré cada uno de los bloques y explicaré lo que hacen.
 
@@ -2348,7 +2348,7 @@ api:
         - 3000:3000
 ```
 
-- El `api` servicio no viene con una imagen preconstruida. En su lugar, tiene una configuración de compilación. Bajo la `build` bloque definimos el contexto y el nombre del Dockerfile para construir una imagen. Ya debería tener una comprensión del contexto y Dockerfile, así que no perderé tiempo explicándolos.
+- El `api` servicio no viene con una imagen preconstruida. En su lugar, tiene una configuración de compilación. Bajo la `build` bloque definimos el contexto y el nombre del Dockerfile para construir una imagen.
 - La `image` clave contiene el nombre de la imagen que se va a construir. Si no se asigna, la imagen se nombrará siguiendo el `<project directory name>\_<service name>` sintaxis.
 - Dentro del `environment` mapa, la `DB_HOST` variable muestra una característica de Compose. Es decir, puede hacer referencia a otro servicio en la misma aplicación usando su nombre. Entonces `db` aquí, será reemplazado por la dirección IP del `api` contenedor de servicios. Las variables `DB_DATABASE` y tienen que coincidir con y respectivamente del`DB_PASSWORD POSTGRES_DB POSTGRES_PASSWORD db` definición del servicio.
 - En el `volumes` mapa, puede ver un volumen anónimo y un montaje de enlace descrito. La sintaxis es idéntica a la que ha visto en secciones anteriores.
@@ -2364,7 +2364,7 @@ volumes:
 
 Cualquier volumen con nombre utilizado en cualquiera de los servicios debe definirse aquí. Si no define un nombre, el volumen se nombrará después de `<project directory name>\_<volume key>` y la clave aquí es `db-data` .
 
-Puede obtener información sobre las diferentes opciones para la configuración del volumen en los [documentos](https://docs.docker.com/compose/compose-file/compose-file-v3/#volumes) oficiales .
+Puede obtener información sobre las diferentes opciones para la configuración del volumen en los [documentos oficiales](https://docs.docker.com/compose/compose-file/compose-file-v3/#volumes).
 
 <p align="right">(<a href="#top">volver arriba</a>)</p>
 
@@ -2384,7 +2384,7 @@ docker-compose --file docker-compose.yaml up --detach
 #
 # Step 1/13 : FROM node:lts-alpine as builder
 #  ---> 471e8b4eb0b2
-# Step 2/13 : RUN apk add --no-cache python make g++
+# Step 2/13 : RUN apk add --no-cache python3 make g++
 #  ---> Running in 197056ec1964
 ### LONG INSTALLATION STUFF GOES HERE ###
 # Removing intermediate container 197056ec1964
