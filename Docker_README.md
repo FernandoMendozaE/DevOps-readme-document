@@ -112,8 +112,7 @@
         <li><a href="#cómo-ejecutar-comandos-dentro-de-un-servicio-en-ejecución-en-docker-compose-exec">Cómo ejecutar comandos dentro de un servicio en ejecución en Docker Compose (exec)</a></li>
         <li><a href="#cómo-acceder-a-los-registros-desde-un-servicio-en-ejecución-en-docker-compose-logs">Cómo acceder a los registros desde un servicio en ejecución en Docker Compose (logs)</a></li>
         <li><a href="#cómo-detener-servicios-en-docker-compose-down-o-stop">Cómo detener servicios en Docker Compose (down o stop)</a></li>
-        <li><a href="#"></a></li>
-        <li><a href="#"></a></li>
+        <li><a href="#cómo-componer-una-aplicación-de-pila-completa-en-docker-compose">Cómo componer una aplicación de pila completa en Docker Compose</a></li>
       </ul>
     </li>
     <li><a href="#contributing">Contributing</a></li>
@@ -2539,6 +2538,229 @@ Para detener los servicios, hay dos enfoques que puede tomar:
   ```sh
   docker-compose stop
   ```
+
+<p align="right">(<a href="#top">volver arriba</a>)</p>
+
+### Cómo componer una aplicación de pila completa en Docker Compose
+
+En esta subsección, agregaremos un front-end a nuestra API de notas y la convertiremos en una aplicación full-stack completa.
+
+Si ha clonado el [repositorio](https://github.com/fhsinchy/docker-handbook-projects) de código del proyecto, vaya al `fullstack-notes-application` directorio. Cada directorio dentro de la raíz del proyecto contiene el código para cada servicio y el `Dockerfile` correspondiente.
+
+Antes de comenzar con el `docker-compose.yaml` archivo, veamos un diagrama de cómo va a funcionar la aplicación:
+
+<div align="center"> 
+  <img src="https://www.freecodecamp.org/news/content/images/2021/01/fullstack-application-design.svg" alt="screenshot" />
+</div>
+
+En lugar de aceptar solicitudes directamente como lo hicimos anteriormente, en esta aplicación todas las solicitudes serán recibidas primero por un servicio NGINX (llamémoslo enrutador).
+
+El enrutador luego verá si el punto final solicitado tiene `/api` en él. En caso afirmativo, el enrutador enrutará la solicitud al back-end o, si no, el enrutador enrutará la solicitud al front-end.
+
+Haces esto porque cuando ejecutas una aplicación front-end, no se ejecuta dentro de un contenedor. Se ejecuta en el navegador, servido desde un contenedor. Como resultado, la red de Compose no funciona como se esperaba y la aplicación front-end no puede encontrar el `api` servicio.
+
+NGINX, por otro lado, se ejecuta dentro de un contenedor y puede comunicarse con los diferentes servicios en toda la aplicación.
+
+No entraré en la configuración de NGINX aquí. Ese tema está un poco fuera del alcance de este libro. Pero si desea echarle un vistazo, siga adelante y consulte los archivos `/notes-api/nginx/development.conf` y `/notes-api/nginx/production.conf`. El código para el `/notes-api/nginx/Dockerfile.dev` es el siguiente:
+
+```sh
+FROM nginx:stable-alpine
+
+COPY ./development.conf /etc/nginx/conf.d/default.conf
+```
+
+Todo lo que hace es copiar el archivo de configuración `/etc/nginx/conf.d/default.conf` dentro del contenedor.
+
+Comencemos a escribir el `docker-compose.yaml` archivo. Aparte de los servicios `api` y `db` habrá los servicios `client` y `nginx` . También habrá algunas definiciones de red que abordaré en breve.
+
+```sh
+version: "3.8"
+
+services:
+    db:
+        image: postgres:12
+        container_name: notes-db-dev
+        volumes:
+            - db-data:/var/lib/postgresql/data
+        environment:
+            POSTGRES_DB: notesdb
+            POSTGRES_PASSWORD: secret
+        networks:
+            - backend
+    api:
+        build:
+            context: ./api
+            dockerfile: Dockerfile.dev
+        image: notes-api:dev
+        container_name: notes-api-dev
+        volumes:
+            - /home/node/app/node_modules
+            - ./api:/home/node/app
+        environment:
+            DB_HOST: db ## same as the database service name
+            DB_PORT: 5432
+            DB_USER: postgres
+            DB_DATABASE: notesdb
+            DB_PASSWORD: secret
+        networks:
+            - backend
+    client:
+        build:
+            context: ./client
+            dockerfile: Dockerfile.dev
+        image: notes-client:dev
+        container_name: notes-client-dev
+        volumes:
+            - /home/node/app/node_modules
+            - ./client:/home/node/app
+        networks:
+            - frontend
+    nginx:
+        build:
+            context: ./nginx
+            dockerfile: Dockerfile.dev
+        image: notes-router:dev
+        container_name: notes-router-dev
+        restart: unless-stopped
+        ports:
+            - 8080:80
+        networks:
+            - backend
+            - frontend
+
+volumes:
+    db-data:
+        name: notes-db-dev-data
+
+networks:
+    frontend:
+        name: fullstack-notes-application-network-frontend
+        driver: bridge
+    backend:
+        name: fullstack-notes-application-network-backend
+        driver: bridge
+```
+
+El archivo es casi idéntico al anterior con el que trabajó. Lo único que necesita alguna explicación es la configuración de la red. El código del `networks` bloque es el siguiente:
+
+```sh
+networks:
+    frontend:
+        name: fullstack-notes-application-network-frontend
+        driver: bridge
+    backend:
+        name: fullstack-notes-application-network-backend
+        driver: bridge
+```
+
+He definido dos redes puente. De forma predeterminada, Compose crea una red puente y adjunta todos los contenedores a ella. En este proyecto, sin embargo, quería un aislamiento de red adecuado. Así que definí dos redes, una para los servicios de front-end y otra para los servicios de back-end.
+
+También agregué un `networks` bloque en cada una de las definiciones de servicio. De esta forma, el servicio `api` y `db` se conectarán a una red y el `client` servicio se conectará a una red separada. Pero el `nginx` servicio se adjuntará a ambas redes para que pueda funcionar como enrutador entre los servicios de front-end y back-end.
+
+Inicie todos los servicios ejecutando el siguiente comando:
+
+```sh
+docker-compose --file docker-compose.yaml up --detach
+
+# Creating network "fullstack-notes-application-network-backend" with driver "bridge"
+# Creating network "fullstack-notes-application-network-frontend" with driver "bridge"
+# Creating volume "notes-db-dev-data" with default driver
+# Building api
+# Sending build context to Docker daemon  37.38kB
+#
+# Step 1/13 : FROM node:lts-alpine as builder
+#  ---> 471e8b4eb0b2
+# Step 2/13 : RUN apk add --no-cache python make g++
+#  ---> Running in 8a4485388fd3
+### LONG INSTALLATION STUFF GOES HERE ###
+# Removing intermediate container 8a4485388fd3
+#  ---> 47fb1ab07cc0
+# Step 3/13 : WORKDIR /app
+#  ---> Running in bc76cc41f1da
+# Removing intermediate container bc76cc41f1da
+#  ---> 8c03fdb920f9
+# Step 4/13 : COPY ./package.json .
+#  ---> a1d5715db999
+# Step 5/13 : RUN npm install
+#  ---> Running in fabd33cc0986
+### LONG INSTALLATION STUFF GOES HERE ###
+# Removing intermediate container fabd33cc0986
+#  ---> e09913debbd1
+# Step 6/13 : FROM node:lts-alpine
+#  ---> 471e8b4eb0b2
+# Step 7/13 : ENV NODE_ENV=development
+#  ---> Using cache
+#  ---> b7c12361b3e5
+# Step 8/13 : USER node
+#  ---> Using cache
+#  ---> f5ac66ca07a4
+# Step 9/13 : RUN mkdir -p /home/node/app
+#  ---> Using cache
+#  ---> 60094b9a6183
+# Step 10/13 : WORKDIR /home/node/app
+#  ---> Using cache
+#  ---> 316a252e6e3e
+# Step 11/13 : COPY . .
+#  ---> Using cache
+#  ---> 3a083622b753
+# Step 12/13 : COPY --from=builder /app/node_modules /home/node/app/node_modules
+#  ---> Using cache
+#  ---> 707979b3371c
+# Step 13/13 : CMD [ "./node_modules/.bin/nodemon", "--config", "nodemon.json", "bin/www" ]
+#  ---> Using cache
+#  ---> f2da08a5f59b
+# Successfully built f2da08a5f59b
+# Successfully tagged notes-api:dev
+# Building client
+# Sending build context to Docker daemon  43.01kB
+#
+# Step 1/7 : FROM node:lts-alpine
+#  ---> 471e8b4eb0b2
+# Step 2/7 : USER node
+#  ---> Using cache
+#  ---> 4be5fb31f862
+# Step 3/7 : RUN mkdir -p /home/node/app
+#  ---> Using cache
+#  ---> 1fefc7412723
+# Step 4/7 : WORKDIR /home/node/app
+#  ---> Using cache
+#  ---> d1470d878aa7
+# Step 5/7 : COPY ./package.json .
+#  ---> Using cache
+#  ---> bbcc49475077
+# Step 6/7 : RUN npm install
+#  ---> Using cache
+#  ---> 860a4a2af447
+# Step 7/7 : CMD [ "npm", "run", "serve" ]
+#  ---> Using cache
+#  ---> 11db51d5bee7
+# Successfully built 11db51d5bee7
+# Successfully tagged notes-client:dev
+# Building nginx
+# Sending build context to Docker daemon   5.12kB
+#
+# Step 1/2 : FROM nginx:stable-alpine
+#  ---> f2343e2e2507
+# Step 2/2 : COPY ./development.conf /etc/nginx/conf.d/default.conf
+#  ---> Using cache
+#  ---> 02a55d005a98
+# Successfully built 02a55d005a98
+# Successfully tagged notes-router:dev
+# Creating notes-client-dev ... done
+# Creating notes-api-dev    ... done
+# Creating notes-router-dev ... done
+# Creating notes-db-dev     ... done
+```
+
+Ahora visita http://localhost:8080 .
+
+<div align="center"> 
+  <img src="https://www.freecodecamp.org/news/content/images/size/w1600/2021/01/notes-application.png" />
+</div>
+
+```sh
+
+```
 
 ```sh
 
